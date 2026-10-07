@@ -19,6 +19,7 @@ import pathlib
 import re
 import subprocess
 import sys
+import time
 
 # 控制台是 GBK：被拉起的程序（自检脚本、PowerShell）输出里可能有 GBK 编不出的字符，
 # 直接 print 会抛 UnicodeEncodeError，把"其实通过"的一轮回归判成崩溃（实测踩过）。
@@ -1226,7 +1227,15 @@ def check_docs_consistency():
     print("=" * 78)
     # 实测：闸门项数（run-checks 的 release 项 + 3 构建 + 2 界面 + 传输层）
     rc_src = (ROOT / "build" / "run-checks.py").read_text(encoding="utf-8", errors="replace")
-    named = len(re.findall(r"results\.append\((\w+)\(\)\)", rc_src))
+    # 【必须先把注释剥掉】否则本文档里的**示例文字**会被当成真代码数进去
+    #（实测：注释里写了两种写法作说明，结果多数出 2 项，报"实测 47 项"）。
+    # 这个坑项目里踩过不止一次：数代码前先剥注释。
+    rc_src_nc = re.sub(r"(?m)^[ \t]*#.*$", " ", rc_src)
+    # 【2026-10-07】兼容两种写法：
+    #   results.append(check_x())          —— 普通项
+    #   results.append(e2e(check_x()))     —— 会启动实例的项（跑前后自动降温）
+    # 只认前一种会把包装过的项漏掉，闸门总数就会数少。
+    named = len(re.findall(r"results\.append\((?:e2e\()?(\w+)\(\)\)", rc_src_nc))
     gates = named + 3 + 2 + 1          # 3 构建 + 界面前置/界面 + 传输层
     # 实测：包版本
     zips = sorted((ROOT / "dist").glob("*.zip"), key=lambda p: p.stat().st_mtime)
@@ -1898,34 +1907,34 @@ def main():
         results.append(check_docs_consistency())
         results.append(check_ui_no_duplicate_entry())
         results.append(check_room_store())
-        results.append(e2e(check_room_create))
-        results.append(e2e(check_chat_end_to_end))
-        results.append(e2e(check_voice_call))
-        results.append(e2e(check_call_button_clickable))
-        results.append(e2e(check_one_side_call))
-        results.append(e2e(check_hangup_sync))
-        results.append(e2e(check_rejoin_call))
-        results.append(e2e(check_mute_cycle))
-        results.append(e2e(check_no_js_error))
-        results.append(e2e(check_room_rename_delete))
-        results.append(e2e(check_name_change))
-        results.append(e2e(check_input_clickable))
-        results.append(e2e(check_signal_stays_alive))
-        results.append(e2e(check_auto_reconnect))
-        results.append(e2e(check_user_flow))
-        results.append(e2e(check_file_and_selfname))
-        results.append(e2e(check_file_open_entry))
+        results.append(e2e(check_room_create()))
+        results.append(e2e(check_chat_end_to_end()))
+        results.append(e2e(check_voice_call()))
+        results.append(e2e(check_call_button_clickable()))
+        results.append(e2e(check_one_side_call()))
+        results.append(e2e(check_hangup_sync()))
+        results.append(e2e(check_rejoin_call()))
+        results.append(e2e(check_mute_cycle()))
+        results.append(e2e(check_no_js_error()))
+        results.append(e2e(check_room_rename_delete()))
+        results.append(e2e(check_name_change()))
+        results.append(e2e(check_input_clickable()))
+        results.append(e2e(check_signal_stays_alive()))
+        results.append(e2e(check_auto_reconnect()))
+        results.append(e2e(check_user_flow()))
+        results.append(e2e(check_file_and_selfname()))
+        results.append(e2e(check_file_open_entry()))
         results.append(check_page_modules_shape())
         results.append(check_modules_dispose())
-        results.append(e2e(check_share_audio_end_to_end))
+        results.append(e2e(check_share_audio_end_to_end()))
         results.append(check_invite_parse())
-        results.append(e2e(check_screen_share_end_to_end))
+        results.append(e2e(check_screen_share_end_to_end()))
 
     # 【release 也必须跑这一条】2026-10-06 发现的洞：原来是 `("all", "selftest")`，
     # 于是**发版严格模式 release 反而漏跑了传输层 6 阶段自测** —— 而 release 是唯一出包的路径，
     # 漏掉的正好是最该跑的那一环（"严格模式比随便跑跑还松"）。现在三处都有它。
     if what in ("all", "release"):
-        results.append(e2e(check_two_instance))
+        results.append(e2e(check_two_instance()))
 
     if what in ("all", "selftest", "release"):
         # 传输层自测：结果写在探针同级目录的日志里，比解析 stdout 稳妥。
