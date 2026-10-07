@@ -1,0 +1,130 @@
+# 鏋勫缓浜х墿 / 渚濊禆 / 澶ф枃浠讹紙浠撳簱鍙斁婧愮爜涓庢枃妗ｏ級
+dist/*.exe
+dist/*.zip
+dist/*.msi
+dist/*.apk
+dist/winui/
+dist/android/
+dist/swiftdrop.html
+dist/zongxian-icon.png
+dist/zongxian.ico
+dist/zongxian_media.dll
+dist/zxprobe.exe
+dist/nstest.exe
+
+# C# / .NET锛圵inUI 3 妗岄潰绔級
+src/winui-cs/bin/
+src/winui-cs/obj/
+src/winui-cs/packages/
+src/winui-cs/*.manifest.bak
+*.user
+
+# 閫氱敤锛氫换浣曞眰绾х殑鏋勫缓浜х墿锛堝悇鎺㈤拡銆侀獙璇佸簲鐢ㄧ殑 bin/obj 涔嬪墠婕忎簡锛?# 棣栨鎻愪氦鍓嶆鏌ュ彂鐜颁細甯﹁繘鍑犵櫨 MB 鐨?exe/dll/pdb锛?**/bin/
+**/obj/
+src/media/probe/build/
+**/*.pdb
+**/*.ilk
+build/downloads/
+
+# 缂栬瘧鍑烘潵鐨勫彲鎵ц鏂囦欢涓庣洰鏍囨枃浠朵竴寰嬩笉鍏ュ簱
+#锛堟暀璁細build/inject-selftest.exe/.obj 灏辨槸杩欎箞娣疯繘鍘昏繃涓€娆★紱
+*.exe
+*.obj
+*.lib
+*.exp
+*.dll
+
+# 鎺㈤拡涓庤皟璇曚骇鐗╋細鐮佹祦 / 浣嶅浘 / 褰曢煶 / 璋冭瘯鎴浘涓€寰嬩笉鍏ュ簱
+*.h264
+*.bmp
+*.wav
+build/*.png
+build/shots/
+
+build/pyi-work/
+build/qr-*.json
+
+# C++ 鏋勫缓涓棿浜х墿锛堝獟浣撳紩鎿庝笌 WinUI C++ 鐗堬級
+src/media/obj/
+src/media/bin/
+src/winui/obj/
+src/winui/bin/
+src/winui/packages/
+src/winui/zongxian_voice/
+
+build/winui-window.png
+build/winui-selfcheck.png
+build/pl0-*.wav
+
+# WebView2 鐨?user data folder锛堟祻瑙堝櫒缂撳瓨锛屾斁鍦?exe 鍚岀洰褰曚互淇濊瘉渚挎惡鎬э級
+dist/winui/.webview2/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/qrvenv/
+build/net-venv/
+build/pack-venv/
+build/pyi-onedir/
+build/msi-out/
+build/downloads/
+build/android-sdk/
+build/jdk/
+build/nsis/
+build/wix/
+build/innosetup/
+build/e2e/node_modules/
+build/e2e/package-lock.json
+
+# 瀹夊崜绛惧悕鏉愭枡锛?*绉侀挜涓庡彛浠ょ粷涓嶅叆搴?*
+build/android/
+
+# 杩愯鏈熸暟鎹笌娴嬭瘯娈嬬暀
+tmp/
+swiftdrop-recv/
+*.log
+trace.txt
+
+build/snapshots/
+build/dist-quarantine-*/
+
+# 缂栬緫鍣?/ 绯荤粺
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+_mc_opt/
+.dsh/
+
+# --- 私有/一次性产物，绝不进仓库（2026-10-06）---
+PunchHoleStatus/
+build/zxprobe-probe-on/
+
+# --- 本机自检用的临时可执行文件（2026-10-06 补）---
+# 教训：build/inject-selftest.exe 与 build/topmost-selftest.exe 是本地实验产物，
+# 之前一直以未跟踪状态挂在 git status 里（容易被顺手 `git add .` 带进库）。
+# 对应的 .cpp 源码保留（要能重建），只挡产物。
+build/inject-selftest.exe
+build/topmost-selftest.exe
+
+# 用户私有目录：明确要求不得改动，也不入库（名字必须写对，否则规则匹配不上）
+dist/棕仙的传输软件/
+dist/棕仙语音-测试版-v36/
+
+# C++ 探针的构建产物（不是源码）
+src/winui-probe/bin/
+src/winui-probe/obj/
+src/winui-videoprobe/bin/
+src/winui-videoprobe/obj/
+src/winui-cs/bin/
+src/winui-cs/obj/
+
+# 发行包的**展开目录**（release.py 解压 zip 产生；单个 30MB+/上百文件，绝不入库）
+# 注意：dist/*.zip 是唯一要跟踪的产物形态（见上面 dist/*.zip 规则）。
+dist/*/
+
+# 运行期日志与诊断（应用写到 logs/ 子目录，不是 exe 同目录）
+logs/

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>棕仙语音 · 能力自检</title>
+<style>
+  :root { color-scheme: dark; }
+  body { font: 14px/1.7 "Microsoft YaHei", system-ui, sans-serif;
+         background:#16181d; color:#e6e6e6; margin:0; padding:24px 28px; }
+  h1 { font-size:19px; margin:0 0 4px; }
+  .sub { color:#8b939e; font-size:12px; margin-bottom:18px; }
+  section { background:#1e2127; border:1px solid #2c313a; border-radius:8px;
+            padding:14px 16px; margin-bottom:14px; }
+  h2 { font-size:14px; margin:0 0 10px; color:#cfd6e0; font-weight:600; }
+  button { background:#2b6cb0; color:#fff; border:0; border-radius:6px;
+           padding:8px 16px; font-size:13px; cursor:pointer; margin-right:8px; }
+  button:hover { background:#3182ce; }
+  button:disabled { background:#3a3f47; color:#7c848f; cursor:default; }
+  pre { background:#14161a; border:1px solid #262b33; border-radius:6px;
+        padding:12px; margin:10px 0 0; white-space:pre-wrap; word-break:break-all;
+        font: 12px/1.65 Consolas, "Cascadia Mono", monospace; max-height:420px;
+        overflow:auto; }
+  .ok   { color:#48bb78; font-weight:600; }
+  .bad  { color:#f56565; font-weight:600; }
+  .warn { color:#ecc94b; font-weight:600; }
+  .k    { color:#90cdf4; }
+  video { width:100%; max-width:520px; border-radius:6px; background:#000;
+          margin-top:10px; display:block; }
+  .bar { height:8px; background:#2d333c; border-radius:4px; overflow:hidden;
+         margin-top:8px; max-width:420px; }
+  .bar > i { display:block; height:100%; width:0; background:#48bb78;
+             transition:width .06s linear; }
+</style>
+</head>
+<body>
+<h1>棕仙语音 · 能力自检</h1>
+<div class="sub">用来确认这台机器上 Chromium(WebView2/Edge) 到底能提供哪些能力。<b>不改任何设置，只读取与报告。</b></div>
+
+<section>
+  <h2>1. 环境与 WebRTC 能力</h2>
+  <button onclick="checkEnv()">检测</button>
+  <pre id="env">点上面的按钮开始</pre>
+</section>
+
+<section>
+  <h2>2. 麦克风 + 降噪（getUserMedia）</h2>
+  <button onclick="checkMic()">打开麦克风并测电平</button>
+  <button onclick="stopMic()">停止</button>
+  <div class="bar"><i id="micbar"></i></div>
+  <pre id="mic">未检测</pre>
+</section>
+
+<section>
+  <h2>3. 屏幕共享 + 系统音频（getDisplayMedia）—— 关键项</h2>
+  <div class="sub" style="margin:0 0 10px">
+    点按钮后 <b>共享对话框里请勾选「分享系统音频 / 共享音频」</b>（不同版本叫法不同）。
+    这是判断"共享全部应用音频"能否直接用浏览器能力实现的关键。
+  </div>
+  <button onclick="checkScreen()">开始屏幕共享</button>
+  <button onclick="stopScreen()">停止</button>
+  <video id="scr" autoplay muted playsinline></video>
+  <pre id="screen">未检测</pre>
+</section>
+
+<script>
+const $ = id => document.getElementById(id);
+const log = (id, s) => { $(id).textContent += (($(id).textContent && !$(id).textContent.startsWith('点上面') && !$(id).textContent.startsWith('未检测') && $(id).textContent.startsWith('环境') ? '' : '')) + s + '\n'; };
+const set = (id, s) => { $(id).textContent = s; };
+const add = (id, s) => { $(id).textContent += s + '\n'; };
+const pass = b => b ? '<span class="ok">✓ 支持</span>' : '<span class="bad">✗ 不支持</span>';
+
+/* ---------------- 1. 环境 ---------------- */
+function checkEnv() {
+  const L = [];
+  const ua = navigator.userAgent;
+  L.push('<span class="k">User-Agent</span>: ' + ua);
+  // 从 UA 里抠出 Chromium 与 Edge 版本，方便对照
+  const cm = ua.match(/Chrome\/(\d+\.\d+\.\d+\.\d+)/);
+  const em = ua.match(/Edg\/(\d+\.\d+\.\d+\.\d+)/);
+  L.push('<span class="k">Chromium 内核</span>: ' + (cm ? cm[1] : '未知'));
+  L.push('<span class="k">Edge 版本</span>: ' + (em ? em[1] : '未知'));
+  L.push('<span class="k">安全上下文</span>: ' + (window.isSecureContext ? '是（WebRTC 需要）' : '否 ← 会导致下面全部失败'));
+  L.push('');
+  L.push('<span class="k">navigator.mediaDevices</span>: ' + pass(!!navigator.mediaDevices));
+  L.push('<span class="k">getUserMedia</span>: ' + pass(!!navigator.mediaDevices?.getUserMedia));
+  L.push('<span class="k">getDisplayMedia</span>: ' + pass(!!navigator.mediaDevices?.getDisplayMedia));
+  L.push('<span class="k">enumerateDevices</span>: ' + pass(!!navigator.mediaDevices?.enumerateDevices));
+  L.push('<span class="k">RTCPeerConnection</span>: ' + pass(typeof RTCPeerConnection === 'function'));
+  L.push('<span class="k">RTCDataChannel</span>: ' + pass(typeof RTCPeerConnection === 'function' && !!RTCPeerConnection.prototype.createDataChannel));
+  L.push('<span class="k">MediaStreamTrackProcessor</span>: ' + pass(typeof MediaStreamTrackProcessor === 'function'));
+  L.push('<span class="k">AudioWorklet</span>: ' + pass(typeof AudioWorkletNode === 'function'));
+  L.push('');
+  L.push('<span class="k">受支持的约束（非常重要，决定降噪强度能不能调）</span>:');
+  const sup = navigator.mediaDevices?.getSupportedConstraints?.() || {};
+  ['noiseSuppression','echoCancellation','autoGainControl','sampleRate','channelCount',
+   'displaySurface','suppressLocalAudioPlayback','voiceIsolation']
+    .forEach(k => L.push('  ' + k + ': ' + (sup[k] ? '<span class="ok">是</span>' : '<span class="warn">否</span>')));
+  set('env', L.join('\n'));
+
+  // 异步列设备
+  navigator.mediaDevices.enumerateDevices().then(ds => {
+    add('env', '\n<span class="k">设备枚举</span>（未授权时 label 为空是正常的）:');
+    ds.forEach(d => add('env', '  [' + d.kind + '] ' + (d.label || '(无标签，需先授权)') +
+      (d.deviceId ? '  id=' + d.deviceId.slice(0, 12) + '…' : '')));
+  }).catch(e => add('env', '设备枚举失败: ' + e.message));
+}
+
+/* ---------------- 2. 麦克风 ---------------- */
+let micStream = null, micCtx = null, micRAF = 0;
+async function checkMic() {
+  stopMic();
+  set('mic', '正在请求麦克风权限…');
+  try {
+    // 明确请求降噪三件套：这三项就是"语音通话带降噪"的基础
+    const constraints = {
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1,
+      },
+      video: false
+    };
+    micStream = await navigator.mediaDevices.getUserMedia(constraints);
+    const track = micStream.getAudioTracks()[0];
+    const st = track.getSettings ? track.getSettings() : {};
+    const L = [];
+    L.push('轨道: ' + track.label);
+    L.push('<span class="k">实际生效的设置</span>（注意：可能与你请求的不同，浏览器说了算）:');
+    ['echoCancellation','noiseSuppression','autoGainControl','sampleRate','channelCount','deviceId']
+      .forEach(k => L.push('  ' + k + ': ' + (st[k] === undefined ? '(未报告)' :
+        (k === 'deviceId' ? String(st[k]).slice(0,12)+'…' : st[k]))));
+    // 对比请求值与生效值
+    L.push('');
+    L.push('<span class="k">请求 vs 生效</span>:');
+    L.push('  echoCancellation  ' + constraints.audio.echoCancellation + ' → ' + st.echoCancellation);
+    L.push('  noiseSuppression  ' + constraints.audio.noiseSuppression + ' → ' + st.noiseSuppression);
+    L.push('  autoGainControl   ' + constraints.audio.autoGainControl + ' → ' + st.autoGainControl);
+    L.push('');
+    L.push('下面实时显示电平。对着麦克风说话，绿条应明显跳动：');
+    set('mic', L.join('\n'));
+
+    micCtx = new AudioContext();
+    const src = micCtx.createMediaStreamSource(micStream);
+    const an = micCtx.createAnalyser();
+    an.fftSize = 1024;
+    src.connect(an);
+    const buf = new Float32Array(an.fftSize);
+    const tick = () => {
+      an.getFloatTimeDomainData(buf);
+      let sum = 0, peak = 0;
+      for (let i = 0; i < buf.length; i++) { sum += buf[i]*buf[i]; peak = Math.max(peak, Math.abs(buf[i])); }
+      const rms = Math.sqrt(sum / buf.length);
+      const db = 20 * Math.log10(Math.max(rms, 1e-7));
+      // -70dB 映射到 0%，-10dB 映射到 100%
+      const pct = Math.max(0, Math.min(100, (db + 70) / 60 * 100));
+      $('micbar').style.width = pct.toFixed(1) + '%';
+      $('micbar').style.background = peak > 0.99 ? '#f56565' : (db > -40 ? '#48bb78' : '#ecc94b');
+      micRAF = requestAnimationFrame(tick);
+    };
+    tick();
+  } catch (e) {
+    set('mic', '<span class="bad">失败</span>: ' + e.name + ' — ' + e.message);
+  }
+}
+function stopMic() {
+  if (micRAF) { cancelAnimationFrame(micRAF); micRAF = 0; }
+  if (micCtx) { micCtx.close(); micCtx = null; }
+  if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+  $('micbar').style.width = '0%';
+}
+
+/* ---------------- 3. 屏幕共享 + 系统音频 ---------------- */
+let scrStream = null;
+async function checkScreen() {
+  stopScreen();
+  set('screen', '正在弹出共享选择框…请在对话框里勾选「共享音频 / 系统音频」');
+  const L = [];
+  try {
+    // 关键：请求 audio。Chromium 在 Windows 上是否真给系统音频，
+    // 取决于版本与标志 —— 这正是本页要验证的。
+    scrStream = await navigator.mediaDevices.getDisplayMedia({
+      video: true,
+      audio: true
+    });
+
+    const vTracks = scrStream.getVideoTracks();
+    const aTracks = scrStream.getAudioTracks();
+    $('scr').srcObject = scrStream;
+
+    L.push('<span class="k">返回的轨道数</span>: video=' + vTracks.length + ', audio=' + aTracks.length);
+
+    if (vTracks.length) {
+      const s = vTracks[0].getSettings ? vTracks[0].getSettings() : {};
+      L.push('');
+      L.push('<span class="k">视频轨</span>: ' + vTracks[0].label);
+      ['width','height','frameRate','displaySurface'].forEach(k =>
+        L.push('  ' + k + ': ' + (s[k] === undefined ? '(未报告)' : s[k])));
+    }
+
+    L.push('');
+    if (aTracks.length > 0) {
+      const s = aTracks[0].getSettings ? aTracks[0].getSettings() : {};
+      L.push('<span class="ok">✓ 拿到了音频轨 —— 系统音频共享可用</span>');
+      L.push('<span class="k">音频轨</span>: ' + aTracks[0].label);
+      ['sampleRate','channelCount','deviceId'].forEach(k =>
+        L.push('  ' + k + ': ' + (s[k] === undefined ? '(未报告)' : s[k])));
+
+      // 顺手验证这条音频轨真的有信号（有些版本返回轨道但永远是静音）
+      const ctx = new AudioContext();
+      const src = ctx.createMediaStreamSource(new MediaStream(aTracks));
+      const an = ctx.createAnalyser();
+      an.fftSize = 1024;
+      src.connect(an);
+      const buf = new Float32Array(an.fftSize);
+      let frames = 0, maxDb = -Infinity, silentFrames = 0;
+      const t0 = performance.now();
+      const sample = () => {
+        an.getFloatTimeDomainData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) sum += buf[i]*buf[i];
+        const db = 20*Math.log10(Math.max(Math.sqrt(sum/buf.length), 1e-7));
+        if (db > maxDb) maxDb = db;
+        if (db < -80) silentFrames++;
+        frames++;
+        if (performance.now() - t0 < 2000 && frames < 400) requestAnimationFrame(sample);
+        else {
+          add('screen', '\n<span class="k">音频轨 2 秒采样</span>: 最大电平 ' + maxDb.toFixed(1) +
+            ' dBFS，静音帧 ' + silentFrames + '/' + frames);
+          add('screen', maxDb < -80
+            ? '<span class="warn">⚠ 轨道存在但全程静音</span>：可能是系统此刻真的没在播放声音；请播放一段音乐再点一次本按钮以确认。'
+            : '<span class="ok">✓ 轨道有真实信号，系统音频捕获确实可用</span>');
+        }
+      };
+      sample();
+      L.push('');
+      L.push('（正在对音频轨做 2 秒采样以确认不是"给了轨道但永远静音"…）');
+    } else {
+      L.push('<span class="bad">✗ 没有音频轨 —— 这个版本的 getDisplayMedia 不给系统音频</span>');
+      L.push('');
+      L.push('<span class="k">结论</span>: "共享全部应用音频" 无法只靠浏览器能力实现，需要走原生 WASAPI loopback。');
+    }
+
+    // 记录用户停止共享的事件（共享随时可能被系统/用户终止）
+    vTracks.forEach(t => t.addEventListener('ended', () => add('screen', '\n（用户停止了共享）')));
+
+    set('screen', L.join('\n') + '\n');
+  } catch (e) {
+    L.push('<span class="bad">失败</span>: ' + e.name + ' — ' + e.message);
+    L.push('');
+    L.push('常见原因：用户取消了选择框(NotAllowedError)、或该环境不允许屏幕捕获。');
+    set('screen', L.join('\n'));
+  }
+}
+function stopScreen() {
+  if (scrStream) { scrStream.getTracks().forEach(t => t.stop()); scrStream = null; }
+  $('scr').srcObject = null;
+}
+
+// 页面加载即自动跑一次环境检测（不需要权限，无副作用）
+checkEnv();
+</script>
+</body>
+</html>

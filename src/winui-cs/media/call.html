@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>棕仙语音 · 通话引擎</title>
+<style>
+  /* 这页在应用里是**不可见**的（WebView2 尺寸 0）。
+     界面全部由原生 WinUI 控件负责，这里只放诊断用的最小样式，
+     方便在独立浏览器里打开调试。 */
+  html, body { margin:0; padding:14px; background:#1b1d21; color:#d8dde3;
+               font:12px/1.6 "Microsoft YaHei", system-ui, sans-serif; }
+  pre { background:#14161a; border:1px solid #2a2f37; border-radius:6px;
+        padding:10px; white-space:pre-wrap; word-break:break-all;
+        font:11px/1.55 Consolas, monospace; margin:0; max-height:70vh; overflow:auto; }
+  .ok { color:#5fd07a; } .bad { color:#f4695f; } .warn { color:#e8c44d; }
+  .k { color:#7cc0ff; }
+</style>
+</head>
+<body>
+<pre id="out">通话引擎启动中…</pre>
+
+<script type="module" src="./call.js"></script>
+</body>
+</html>

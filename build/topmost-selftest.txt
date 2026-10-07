@@ -1,0 +1,32 @@
+﻿创建后（还没置顶）：
+  A 现状：WS_POPUP + TOOLWINDOW|NOACTIVATE（覆盖窗口用的就是这个）          hwnd=00000000003627F0 TOPMOST=False
+  B 去掉 NOACTIVATE：WS_POPUP + TOOLWINDOW                      hwnd=0000000000402584 TOPMOST=False
+  C 去掉 TOOLWINDOW：WS_POPUP + NOACTIVATE                      hwnd=0000000000E023AA TOPMOST=False
+  D 都不带：WS_POPUP                                             hwnd=0000000000940E7E TOPMOST=False
+  E 现状 + 延迟置顶（先显示、泵消息，之后才 SetWindowPos）                      hwnd=000000000087269A TOPMOST=False
+  F 非 frameless 对照：WS_OVERLAPPED 系 + 无扩展样式                   hwnd=00000000009C2704 TOPMOST=False
+  G 探针序列：无 WS_VISIBLE 创建 + SW_SHOWNOACTIVATE + UpdateWindow + SWP_SHOWWINDOW hwnd=0000000000800E76 TOPMOST=False
+  H 同 G，但不带 SWP_SHOWWINDOW                                   hwnd=00000000001922E0 TOPMOST=False
+  I 同 G，但先泵 400ms 消息再置顶                                      hwnd=0000000000552380 TOPMOST=False
+
+置顶尝试：
+  A 现状：WS_POPUP + TOOLWINDOW|NOACTIVATE（覆盖窗口用的就是这个）          SetWindowPos后=True  显式设位后=True  exStyle=0x08000088
+  B 去掉 NOACTIVATE：WS_POPUP + TOOLWINDOW                      SetWindowPos后=True  显式设位后=True  exStyle=0x00000088
+  C 去掉 TOOLWINDOW：WS_POPUP + NOACTIVATE                      SetWindowPos后=True  显式设位后=True  exStyle=0x08000008
+  D 都不带：WS_POPUP                                             SetWindowPos后=True  显式设位后=True  exStyle=0x00000008
+  E 现状 + 延迟置顶（先显示、泵消息，之后才 SetWindowPos）                      SetWindowPos后=True  显式设位后=True  exStyle=0x08000088
+  F 非 frameless 对照：WS_OVERLAPPED 系 + 无扩展样式                   SetWindowPos后=True  显式设位后=True  exStyle=0x00000108
+  G 探针序列：无 WS_VISIBLE 创建 + SW_SHOWNOACTIVATE + UpdateWindow + SWP_SHOWWINDOW SetWindowPos后=True  显式设位后=True  exStyle=0x08000088
+  H 同 G，但不带 SWP_SHOWWINDOW                                   SetWindowPos后=True  显式设位后=True  exStyle=0x08000088
+  I 同 G，但先泵 400ms 消息再置顶                                      SetWindowPos后=True  显式设位后=True  exStyle=0x08000088
+
+1.5 秒后（检查是否被摘掉）：
+  A 现状：WS_POPUP + TOOLWINDOW|NOACTIVATE（覆盖窗口用的就是这个）          TOPMOST=True
+  B 去掉 NOACTIVATE：WS_POPUP + TOOLWINDOW                      TOPMOST=True
+  C 去掉 TOOLWINDOW：WS_POPUP + NOACTIVATE                      TOPMOST=True
+  D 都不带：WS_POPUP                                             TOPMOST=True
+  E 现状 + 延迟置顶（先显示、泵消息，之后才 SetWindowPos）                      TOPMOST=True
+  F 非 frameless 对照：WS_OVERLAPPED 系 + 无扩展样式                   TOPMOST=True
+  G 探针序列：无 WS_VISIBLE 创建 + SW_SHOWNOACTIVATE + UpdateWindow + SWP_SHOWWINDOW TOPMOST=True
+  H 同 G，但不带 SWP_SHOWWINDOW                                   TOPMOST=True
+  I 同 G，但先泵 400ms 消息再置顶                                      TOPMOST=True

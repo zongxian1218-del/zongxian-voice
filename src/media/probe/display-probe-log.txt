@@ -1,0 +1,63 @@
+﻿=== 屏幕采集失败原因定位 ===
+抓帧时长 3 秒，日志 display-probe-log.txt
+
+进程 ID 7448，64 位=1
+
+CoInitializeEx hr=0x00000000
+
+--- 1. 会话与桌面状态 ---
+  进程所在会话        : 1
+  活动控制台会话      : 1  (0xFFFFFFFF = 当前没有)
+  WTS 连接状态        : 0  (0=Active 4=Disconnected)
+  [OK] 进程在活动控制台会话内
+  输入桌面名          : Default
+  [OK] 输入桌面可打开
+  本进程窗口站        : WinSta0
+  本进程桌面          : Default
+  SM_REMOTESESSION    : 0
+  GetSystemMetrics 屏幕: 1920 x 1080
+
+--- 2. 适配器与显示器枚举 ---
+  默认适配器(索引0)   : NVIDIA GeForce RTX 3060 Ti
+  D3D11 默认设备归属   : NVIDIA GeForce RTX 3060 Ti  (feature level 0xB000)
+
+  适配器 0: NVIDIA GeForce RTX 3060 Ti
+         显存 8024 MB  厂商 0x10DE  设备 0x2489  标志 0x0
+         LUID 0x00000000:0x0000E400
+    [0/0] 显示器 "\\.\DISPLAY1"  桌面坐标 (0,0)-(1920,1080)  接桌面=1
+          [OK] DuplicateOutput 成功！1920x1080  格式=87  模式=仅GPU
+          帧1  LastPresent=0 Accumulated=0 指针可见=1 元数据=0 字节
+          帧2  LastPresent=1618734254008 Accumulated=1 指针可见=0 元数据=16 字节
+          帧3  LastPresent=1618734346096 Accumulated=1 指针可见=0 元数据=16 字节
+          帧4  LastPresent=1618734477757 Accumulated=1 指针可见=0 元数据=144 字节
+          帧5  LastPresent=1618734554115 Accumulated=1 指针可见=0 元数据=48 字节
+          帧6  LastPresent=1618734611099 Accumulated=1 指针可见=0 元数据=32 字节
+          帧7  LastPresent=1618734742242 Accumulated=1 指针可见=0 元数据=80 字节
+          帧8  LastPresent=1618734873284 Accumulated=1 指针可见=0 元数据=80 字节
+          抓帧统计: 共 350 帧 / 3.01 秒 = 116.4 fps
+          有画面更新 349 帧 / 仅指针无更新 1 帧 / 超时 0 次 / 错误 0 次
+          [OK] 已存证 BMP display-probe-frame.bmp (1920x1080)
+
+  适配器 1: Intel(R) UHD Graphics 730
+         显存 128 MB  厂商 0x8086  设备 0x4682  标志 0x0
+         LUID 0x00000000:0x0000F5A0
+         （此适配器没有输出）
+
+  适配器 2: NVIDIA GeForce RTX 3060 Ti
+         显存 8024 MB  厂商 0x10DE  设备 0x2489  标志 0x0
+         LUID 0x00000000:0x0001B4F9
+         （此适配器没有输出）
+
+  适配器 3: NVIDIA GeForce RTX 3060 Ti
+         显存 8024 MB  厂商 0x10DE  设备 0x2489  标志 0x0
+         LUID 0x00000000:0x0001A165
+         （此适配器没有输出）
+
+  适配器 4: Microsoft Basic Render Driver
+         显存 0 MB  厂商 0x1414  设备 0x008C  标志 0x2 [软件]
+         LUID 0x00000000:0x0000F532
+         （此适配器没有输出）
+
+=== 结论 ===
+  [OK] 至少有一个 (适配器, 显示器) 组合可以采集。
+       下一步：用这个组合做 NV12 转换 + 硬件 H.264 编码。

@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="Probe.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <WebView2 x:Name="MediaHost" Width="0" Height="0" Opacity="0" IsHitTestVisible="False" />
+    </Grid>
+</Window>

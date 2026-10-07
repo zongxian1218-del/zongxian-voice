@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  棕仙语音 · WinUI 3 桌面端工程文件
+
+  为什么手写 .vcxproj 而不是用 Visual Studio 的 WinUI 模板：
+    · 本机只有 Build Tools，没有 IDE，拿不到模板；
+    · 但**必须用 MSBuild** 而不是 CMake —— C++/WinRT 的 XAML 编译
+      （XamlCompiler 生成 .g.hpp/.xbf，再 cppwinrt 生成投影头）是
+      MSBuild 目标驱动的，CMake 没有官方支持这条链。
+    · 手写一遍也把「这套工具链在本机到底能不能编过」验证掉，这正是 W0 的目标。
+
+  包管理用 packages.config 而不是 PackageReference：
+    见 packages.config 顶部的说明（C++ 工程没有 TFM，PackageReference
+    的 framework 解析会失败）。代价是要显式 Import 包内的 props/targets，
+    好处是完全可控、报错点清晰。
+
+  构建（不需要打开 IDE）：
+    build\build-winui.cmd
+-->
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <!--
+    包还原位置。这里指向 NuGet 全局缓存，因为 build-winui.cmd 用的是
+    msbuild /t:Restore /p:RestorePackagesConfig=true，它会把包放进全局缓存
+    （不是工程下的 packages/ 目录）。
+    如果你更希望包落在工程目录里，把下面两个属性改成 $(ProjectDir)packages
+    并在还原命令里加 -PackagesDirectory。
+  -->
+  <PropertyGroup>
+    <NuGetPackageRoot Condition="'$(NuGetPackageRoot)'==''">$(UserProfile)\.nuget\packages\</NuGetPackageRoot>
+    <WindowsAppSDKPackageDir>$(NuGetPackageRoot)microsoft.windowsappsdk\1.7.250909003\</WindowsAppSDKPackageDir>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{7C3E9A21-4B5D-4F18-9E2A-1D8F6B4C7A03}</ProjectGuid>
+    <RootNamespace>zongxian_voice</RootNamespace>
+    <ProjectName>zongxian_voice</ProjectName>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>10.0.19041.0</WindowsTargetPlatformMinVersion>
+    <MinimumVisualStudioVersion>17.0</MinimumVisualStudioVersion>
+    <!-- C++ 工程用 packages.config 时必须声明，否则 NuGet 目标不会跑 -->
+    <RestorePackagesConfig>true</RestorePackagesConfig>
+  </PropertyGroup>
+
+  <!--
+    Windows App SDK 的关键开关。必须在导入包内 targets **之前** 设置好：
+      WindowsAppSDKSelfContained = true  → 自包含部署，开发期不必先装运行时
+      WindowsPackageType = None          → 非打包（unpackaged）应用，
+                                           不需要 MSIX 就能直接跑 exe
+      UseWinUI = true                    → 启用 WinUI 的 XAML 编译
+  -->
+  <PropertyGroup>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <WindowsPackageType>None</WindowsPackageType>
+    <UseWinUI>true</UseWinUI>
+    <EnableMsixTooling>false</EnableMsixTooling>
+    <AppxPackage>false</AppxPackage>
+    <GenerateAppInstallerFile>false</GenerateAppInstallerFile>
+    <!-- 自包含模式需要生成 WinRT 注册信息（免注册 COM） -->
+    <WindowsAppSdkBootstrapInitialize>true</WindowsAppSdkBootstrapInitialize>
+  </PropertyGroup>
+
+  <!--
+    导入 Windows App SDK 的入口 props。
+    它会带入 WinUI、MrtCore、Bootstrap 等子模块的 prop，
+    必须在 Microsoft.Cpp.props 之前（它要影响编译设置）。
+  -->
+  <Import Project="$(WindowsAppSDKPackageDir)build\native\Microsoft.WindowsAppSDK.props"
+          Condition="Exists('$(WindowsAppSDKPackageDir)build\native\Microsoft.WindowsAppSDK.props')" />
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <UseDebugLibraries Condition="'$(Configuration)'=='Debug'">true</UseDebugLibraries>
+    <UseDebugLibraries Condition="'$(Configuration)'=='Release'">false</UseDebugLibraries>
+    <SpectreMitigation>false</SpectreMitigation>
+  </PropertyGroup>
+
+  <!-- 显式指定工具集版本：本机只装了 14.44，避免回退到不存在的版本 -->
+  <PropertyGroup>
+    <VCToolsVersion Condition="'$(VCToolsVersion)'==''">14.44.35207</VCToolsVersion>
+  </PropertyGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+
+  <!-- 子模块 props 由 Microsoft.WindowsAppSDK.props 内部自动带入，不要重复 Import
+       （重复导入会报 MSB4011 警告）。 -->
+
+  <!-- ================= 编译与链接选项 ================= -->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <!-- 源码含中文，/utf-8 必须；/await 与 /bigobj 是 C++/WinRT 要求 -->
+      <AdditionalOptions>/utf-8 /await /bigobj /Zc:__cplusplus /Zc:twoPhase %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>
+        UNICODE;_UNICODE;NOMINMAX;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;
+        WINRT_LEAN_AND_MEAN;
+        %(PreprocessorDefinitions)
+      </PreprocessorDefinitions>
+      <WarningLevel>Level4</WarningLevel>
+      <ConformanceMode>true</ConformanceMode>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+
+  <!-- ================= 文件清单 ================= -->
+  <ItemGroup>
+    <ClInclude Include="src\pch.h" />
+    <ClInclude Include="src\App.h" />
+    <ClInclude Include="src\MainWindow.h" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\App.cpp" />
+    <ClCompile Include="src\MainWindow.cpp" />
+    <ClCompile Include="src\pch.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+
+  <!--
+    XAML 交给 XamlCompiler。ItemType 必须是：
+      ApplicationDefinition → App.xaml（应用级资源与入口）
+      Page                  → 其他窗口/页面
+    类型写错会导致 InitializeComponent 不生成，报"未声明的标识符"。
+  -->
+  <ItemGroup>
+    <ApplicationDefinition Include="src\App.xaml">
+      <SubType>Designer</SubType>
+    </ApplicationDefinition>
+    <Page Include="src\MainWindow.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+
+  <!--
+    子模块 targets（WinUI / MrtCore / Bootstrap 等）由
+    Microsoft.WindowsAppSDK.targets 内部自动带入，不重复 Import
+    （重复会报 MSB4011）。
+  -->
+
+</Project>

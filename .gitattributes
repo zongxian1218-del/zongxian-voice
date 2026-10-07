@@ -1,0 +1,20 @@
+# 行尾与文本规范化（2026-10-06 加）
+#
+# 【为什么必须有】本仓库的 build\*.cmd 里有 UTF-8 中文注释，而 Windows 的 cmd.exe
+# 在读带多字节注释的 .cmd 时，**纯 LF 行尾会解析错位**（实测：build-winui-cs.cmd 变 LF 后
+# 报 `'buildTransitive' is not recognized` / `inside was unexpected at this time`，
+# 日志只有 13 行、退出码 255；改回 CRLF 立刻 Build OK）。
+# 没有 .gitattributes 时，git 会按 core.autocrlf/编辑器设置决定塞进仓库的行尾 ——
+# 别人 clone 出来可能又变成 LF，构建再次莫名失败。这里把它钉死。
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# 这些是二进制/产物，别做任何文本转换
+*.exe binary
+*.dll binary
+*.lib binary
+*.zip binary
+*.png binary
+*.ico binary
+*.wav binary
+*.h264 binary

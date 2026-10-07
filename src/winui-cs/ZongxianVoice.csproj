@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  棕仙语音 · Windows 桌面端（C# / WinUI 3）
+
+  为什么用 C# 而不是 C++：
+    WinUI 3 的 C# 支持更成熟，而且**构建工具链是自包含的** ——
+    Microsoft.WindowsAppSDK 的 .NET 包里直接带有 XAML 编译器
+    （tools\net6.0\Microsoft.UI.Xaml.Markup.Compiler.dll）与对应的
+    buildTransitive targets。
+
+    相比之下，C++/WinRT 路线需要 Visual Studio 的
+    Microsoft.VisualStudio.Component.WindowsAppSdkSupport.Cpp 组件提供
+    XamlCompiler，本机装不上（VS 安装器需要提权）。
+    详细排查记录见 ..\winui\BUILD-NOTES.md。
+
+  为什么是非打包（Unpackaged）：
+    WindowsPackageType=None + EnableMsixTooling=false 时，构建直接产出可运行的
+    exe，不需要 MSIX 安装包、不需要开发证书。开发与调试最省事。
+    发布到 Microsoft Store 时再切回打包模式（加 Package.appxmanifest）。
+-->
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- WinUI 3 需要 Windows 目标框架；19041 是 Windows App SDK 1.7 的下限 -->
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>ZongxianVoice</RootNamespace>
+    <AssemblyName>ZongxianVoice</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <!-- 启用 WinUI 3 的 XAML 编译与相关 targets -->
+    <UseWinUI>true</UseWinUI>
+
+    <!--
+      非打包模式：直接出 exe。
+      切换成打包只需把 WindowsPackageType 改成 MSIX，
+      并提供 Package.appxmanifest（发布到商店时才需要）。
+    -->
+    <WindowsPackageType>None</WindowsPackageType>
+    <EnableMsixTooling>false</EnableMsixTooling>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+
+    <!--
+      关掉 MRT Core 的资源索引（PRI）工具链。
+
+      【为什么必须关】
+      MrtCore.targets 在 EnableCoreMrtTooling=true 时会导入
+      MrtCore.PriGen.targets，而后者覆盖了 CopyLocalFilesOutputGroup 等
+      标准 MSBuild 目标，并调用这些 Visual Studio 专有任务程序集：
+
+        Microsoft.Build.Packaging.Pri.Tasks.dll  （ExpandPriContent）
+        Microsoft.Build.AppxPackage.dll          （RemovePayloadDuplicates）
+
+      这两个 DLL **既不在 .NET SDK 里，也不在 Build Tools 里**（全盘搜索
+      无结果），只有装完整的 Visual Studio 才有。装了 Build Tools 的环境下
+      构建会连着报两条 MSB4062，而且都指向 dotnet SDK 目录下的假路径，
+      极难归因。
+
+      【关掉的影响】
+      不生成 resources.pri。我们不做多语言资源、不按缩放比切图，
+      非打包模式下不需要它。代价是将来若要做多语言或被本地化的控件文本，
+      需要重新打开并安装对应 VS 组件。
+
+      【备选做法（已评估，不采用）】
+      设 AppxGeneratePriEnabled 等更细的开关只能绕过第一个任务，
+      第二个（RemovePayloadDuplicates）在更靠后的公共目标里仍会触发。
+      所以必须在**导入层面**整体关掉，即这个属性。
+    -->
+    <EnableCoreMrtTooling>false</EnableCoreMrtTooling>
+
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+
+    <!-- x64：本机是 x64 且 Windows App SDK 的自包含运行时按 RID 取 -->
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+
+    <!-- 中文注释与字符串：确保源码按 UTF-8 读取 -->
+    <EnableDefaultItems>true</EnableDefaultItems>
+
+    <!-- 生成调试符号，但不用 ReadyToRun（首次构建快一些） -->
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <!--
+    XAML 文件的 ItemType 必须显式声明，否则会出两个看起来很莫名的错：
+
+      error CS5001: 程序不包含适合于入口点的静态 "Main" 方法
+        原因：ApplicationDefinition 没声明，XAML 编译器就不会生成入口点。
+
+      error MSB3073: XamlCompiler.exe ... 已退出，代码为 1
+        原因：没有任何 XAML 被当成 XAML 处理，编译器拿不到输入。
+
+    ItemType 的规则：
+      ApplicationDefinition → 应用级 XAML（App.xaml），一个工程只能有一个
+      Page                  → 窗口与页面（MainWindow.xaml 等）
+
+    用 EnableDefaultXamlItems=false 关掉默认推断，全部显式列出，
+    这样"哪些文件参与 XAML 编译"一目了然，不会有意外的隐式行为。
+  -->
+  <PropertyGroup>
+    <EnableDefaultXamlItems>false</EnableDefaultXamlItems>
+    <!--
+      这两个也要关：.NET SDK 默认会把 **\*.xaml 推断成 Page 项，
+      与下面显式声明的 ApplicationDefinition / Page 冲突，报
+      error NETSDK1022: 包含了重复的"Page"项。
+      注意 EnableDefaultXamlItems 管不住 .NET SDK 自己的 glob，
+      必须分别关掉 DefaultPageItems / DefaultApplicationDefinitionItems。
+    -->
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <EnableDefaultApplicationDefinitionItems>false</EnableDefaultApplicationDefinitionItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ApplicationDefinition Include="src\App.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </ApplicationDefinition>
+    <Page Include="src\MainWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 清单文件也要显式列出，否则非打包模式的 DPI/权限声明不生效 -->
+    <None Include="app.manifest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      media/ 是 WebView2 加载的页面（call.html / selfcheck.html），**必须随构建拷到输出目录**。
+      之前没有这一条，输出目录里那份是手工拷的 —— 结果源改了、跑的还是旧页面。
+      实测踩过：改了 call.html 的"链路占用"提示，构建后产物里仍是 90,924 B 的旧文件（差 862 B）。
+    -->
+    <Content Include="media\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Windows App SDK：提供 WinUI 3 的 XAML 控件、窗口、Mica、通知等 -->
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250909003" />
+    <!-- 构建工具（含 MSIX 相关目标；非打包模式也建议带上） -->
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
+  </ItemGroup>
+
+  <!--
+    WebView2：通话与屏幕共享区用它承载 Chromium 的 WebRTC 实现。
+    系统已装 WebView2 Runtime 154.0.4258.53，所以这里只需要 SDK（编程接口）。
+  -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3351.48" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  App.xaml —— 全局资源
+
+  设计原则（见 docs/ui-design-guideline-2026-10-04.md §5）：
+    **配色交给 WinUI 的主题系统，不自造品牌色。**
+
+  排版参考 Oopz / Discord，但**颜色不参考它们** ——
+  那两个是深色为主的网页产品。我们是原生 Windows 应用，应该：
+    · 跟随系统明暗主题自动切换
+    · 用 Fluent 的语义画刷（LayerFill / CardBackground / TextFill …），
+      而不是写死 #1E1F22 这类固定值
+    · 强调色跟随系统设置（用户可在"个性化"里改），所以用 AccentFillColorDefaultBrush
+
+  因此这里**刻意几乎什么都不定义**：能用内建的就用内建的。
+  只有两个 WinUI 没有对应语义的状态色需要自定义。
+-->
+<Application
+    x:Class="zx.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- WinUI 自带控件样式，必须第一个加载 -->
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <ResourceDictionary.ThemeDictionaries>
+
+                <!--
+                  只有这两个是"业务语义色"，WinUI 没有现成的对应项。
+                  其余一切（背景、文字、分隔线、强调色、危险色）
+                  都直接用内建资源，不在这里重复定义。
+
+                  自定义色也必须放进 ThemeDictionaries 两套，
+                  否则明暗主题切换时它们不会跟着变。
+                -->
+                <ResourceDictionary x:Key="Default">
+                    <!-- 说话中：头像描边、名字前小图标。
+                         刻意与系统强调色区分 —— 强调色可能是蓝/紫/红，
+                         而"正在说话"需要稳定的绿色语义。 -->
+                    <SolidColorBrush x:Key="ZxSpeakingBrush" Color="#6CCB5F" />
+                    <!-- 我拿到远端控制权 -->
+                    <SolidColorBrush x:Key="ZxControlGrantedBrush" Color="#4CC26A" />
+                </ResourceDictionary>
+
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="ZxSpeakingBrush" Color="#0F7B0F" />
+                    <SolidColorBrush x:Key="ZxControlGrantedBrush" Color="#0F7B0F" />
+                </ResourceDictionary>
+
+                <ResourceDictionary x:Key="HighContrast">
+                    <!-- 高对比度模式下交给系统的强调色，保证可见性 -->
+                    <SolidColorBrush x:Key="ZxSpeakingBrush"
+                                     Color="{ThemeResource SystemColorHighlightColor}" />
+                    <SolidColorBrush x:Key="ZxControlGrantedBrush"
+                                     Color="{ThemeResource SystemColorHighlightColor}" />
+                </ResourceDictionary>
+
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

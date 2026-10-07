@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>棕仙语音 · 媒体引擎</title>
+<style>
+  html, body { margin:0; padding:16px; background:#1b1d21; color:#e6e6e6;
+               font:13px/1.6 "Microsoft YaHei", system-ui, sans-serif; }
+  h1 { font-size:15px; margin:0 0 10px; }
+  pre { background:#14161a; border:1px solid #2a2f37; border-radius:6px;
+        padding:12px; white-space:pre-wrap; word-break:break-all;
+        font:12px/1.6 Consolas, monospace; margin:0; max-height:520px; overflow:auto; }
+  .ok { color:#5fd07a; } .bad { color:#f4695f; } .warn { color:#e8c44d; }
+</style>
+</head>
+<body>
+<h1>媒体引擎自检</h1>
+<pre id="out">初始化…</pre>
+
+<script>
+// ===========================================================================
+// 这一页是「不可见的媒体引擎」的自检页。
+//
+// 它跑在 WinUI 3 应用内嵌的 WebView2 里，职责只有一件：确认这个 WebView2
+// 能不能拿到麦克风、以及浏览器是否真的应用了我们请求的降噪/回声消除参数。
+//
+// 为什么要专门确认：
+//   WebRTC 的能力在不同 Chromium 版本/宿主上差异很大，而且**失败方式是静默的** ——
+//   比如你请求 noiseSuppression:true，它可能返回一条轨道但根本没开降噪，
+//   或者直接不报告该字段。只能靠读 getSettings() 的实际值来判断。
+// ===========================================================================
+
+const out = document.getElementById('out');
+const log = s => { out.textContent += s + '\n'; };
+const pass = b => b ? '<span class="ok">✓</span>' : '<span class="bad">✗</span>';
+
+// 把结果同时通过 WebView2 的消息桥发给 C# 侧
+function post(payload) {
+  try {
+    if (window.chrome && window.chrome.webview) {
+      window.chrome.webview.postMessage(JSON.stringify(payload));
+    }
+  } catch (e) { /* 独立浏览器里打开时没有桥，忽略 */ }
+}
+
+async function runSelfCheck() {
+  out.textContent = '';
+  const report = { type: 'selfcheck', ok: false, steps: [] };
+  const step = (name, ok, detail) => {
+    report.steps.push({ name, ok, detail });
+    log(`${pass(ok)} ${name}${detail ? '  — ' + detail : ''}`);
+  };
+
+  log('<span class="warn">环境</span>');
+  const ua = navigator.userAgent;
+  const m = ua.match(/Chrome\/(\d+\.\d+\.\d+\.\d+)/);
+  log(`  UA: ${ua}`);
+  log(`  Chromium: ${m ? m[1] : '未知'}`);
+  log(`  安全上下文(isSecureContext): ${pass(window.isSecureContext)} ${window.isSecureContext}`);
+  log(`  mediaDevices: ${pass(!!navigator.mediaDevices)}`);
+  log(`  getUserMedia: ${pass(!!navigator.mediaDevices?.getUserMedia)}`);
+  log(`  RTCPeerConnection: ${pass(typeof RTCPeerConnection === 'function')}`);
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    log('\n<span class="bad">致命：getUserMedia 不可用</span>');
+    report.reason = 'getUserMedia unavailable';
+    post(report);
+    return;
+  }
+
+  // ---- 能力探测：这些约束能不能用 ----
+  log('\n<span class="warn">支持的约束</span>');
+  const sup = navigator.mediaDevices.getSupportedConstraints?.() || {};
+  for (const k of ['noiseSuppression','echoCancellation','autoGainControl',
+                   'sampleRate','channelCount','voiceIsolation','suppressLocalAudioPlayback']) {
+    log(`  ${k}: ${pass(!!sup[k])}`);
+  }
+
+  // ---- 真实打开麦克风，并读出**实际生效**的参数 ----
+  log('\n<span class="warn">打开麦克风</span>');
+  try {
+    const constraints = {
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        channelCount: 1,
+      },
+      video: false
+    };
+    log('  请求: echoCancellation=true, noiseSuppression=true, autoGainControl=true, channelCount=1');
+
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    const track = stream.getAudioTracks()[0];
+    const st = track.getSettings ? track.getSettings() : {};
+
+    log(`  轨道标签: ${track.label || '(空，可能未授权真实设备)'}`);
+    log('  实际生效:');
+    for (const k of ['echoCancellation','noiseSuppression','autoGainControl',
+                     'sampleRate','channelCount','deviceId']) {
+      const v = st[k];
+      log(`    ${k} = ${v === undefined ? '(未报告)' : (k === 'deviceId' ? String(v).slice(0,12)+'…' : v)}`);
+    }
+
+    // 关键判定：请求了三件套，是否都真的生效
+    const aec = st.echoCancellation === true;
+    const ns  = st.noiseSuppression === true;
+    const agc = st.autoGainControl === true;
+    const anyApplied = aec || ns || agc;
+    step('麦克风可打开', true, track.label || '');
+    step('回声消除生效', aec, String(st.echoCancellation));
+    step('降噪生效', ns, String(st.noiseSuppression));
+    step('自动增益生效', agc, String(st.autoGainControl));
+
+    // ---- 电平检测：确认真的有信号（不是一条永远静音的轨道）----
+    log('\n<span class="warn">电平检测（2 秒）</span>');
+    const ctx = new AudioContext();
+    const srcNode = ctx.createMediaStreamSource(stream);
+    const an = ctx.createAnalyser();
+    an.fftSize = 1024;
+    srcNode.connect(an);
+    const buf = new Float32Array(an.fftSize);
+    let maxDb = -Infinity, frames = 0;
+    const t0 = performance.now();
+    await new Promise(resolve => {
+      const tick = () => {
+        an.getFloatTimeDomainData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+        const db = 20 * Math.log10(Math.max(Math.sqrt(sum / buf.length), 1e-7));
+        if (db > maxDb) maxDb = db;
+        frames++;
+        if (performance.now() - t0 < 2000) requestAnimationFrame(tick);
+        else resolve();
+      };
+      tick();
+    });
+    log(`  最大电平 ${maxDb.toFixed(1)} dBFS（${frames} 帧）`);
+    if (maxDb > -80) log('  <span class="ok">→ 轨道有真实信号</span>');
+    else log('  <span class="warn">→ 全程极安静：可能是麦克风被静音/禁用，或此刻确实没有环境声。请对着麦克风说话后重测。</span>');
+    step('麦克风有信号', maxDb > -80, maxDb.toFixed(1) + ' dBFS');
+
+    stream.getTracks().forEach(t => t.stop());
+    await ctx.close();
+
+    report.ok = aec && ns;
+    log(`\n<span class="${report.ok ? 'ok' : 'warn'}">结论：${report.ok ? '降噪与回声消除均已生效，可以直接用于通话' : '部分降噪能力未生效，需要确认设备或约束'}</span>`);
+  } catch (e) {
+    step('麦克风可打开', false, `${e.name}: ${e.message}`);
+    report.reason = `${e.name}: ${e.message}`;
+    log(`\n<span class="bad">失败: ${e.name} — ${e.message}</span>`);
+    log('常见原因：权限被拒(NotAllowedError)、无可用录音设备(NotFoundError)、设备被独占(NotReadableError)');
+  }
+
+  post(report);
+}
+
+// ===========================================================================
+// 对 C# 侧暴露的接口。C# 通过 ExecuteScriptAsync 调这些方法。
+//
+// 命名约定：所有供 C# 调用的方法都挂在 window.zxEngine 上，
+// 这样 C# 侧只需要知道一个对象名，不用拼一长串表达式。
+// ===========================================================================
+window.zxEngine = {
+  /** 跑一次完整自检。C# 在引擎就绪后调用。 */
+  run(arg) {
+    runSelfCheck();
+  },
+
+  /** 停止所有媒体轨道（窗口关闭或用户断开时调用）。 */
+  stopAll(arg) {
+    try {
+      if (window.__zxStream) {
+        window.__zxStream.getTracks().forEach(t => t.stop());
+        window.__zxStream = null;
+      }
+    } catch (e) { /* 忽略 */ }
+  },
+};
+
+// 页面加载后不自动跑：由 C# 通过 zxEngine.run() 触发，避免重复执行。
+// 在独立浏览器里手动打开时（没有 C# 宿主），为了让页面本身可用，
+// 检测到没有 WebView2 消息桥就自动跑一次。
+if (!(window.chrome && window.chrome.webview)) {
+  runSelfCheck();
+}
+
+</script>
+</body>
+</html>

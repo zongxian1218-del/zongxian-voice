@@ -1,0 +1,655 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MainWindow.xaml —— 三栏骨架
+
+  布局参考 Oopz / Discord（见 docs/ui-design-guideline-2026-10-04.md §2）：
+    左栏 240px（会话列表） | 中间自适应（主区域） | 右栏 224px（成员列表）
+    顶栏 48px，左下角 56px 自我区
+
+  配色全部用 WinUI 语义画刷，跟随系统明暗主题。唯一的自定义语义色是
+  ZxSpeakingBrush / ZxControlGrantedBrush（定义在 App.xaml）。
+
+  本文件曾被脚本反复重排而损坏（XAML 编译器静默崩溃、不给报错位置），
+  因此重写为结构简单、注释集中的版本，不再嵌入大段说明文字。
+-->
+<Window
+    x:Class="ZongxianVoice.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <!-- 第 0 行原来是远端控制横幅（已删）。保留这一行是因为两个整页浮层
+                 （WelcomeOverlay / SettingsOverlay）用 Grid.RowSpan="2" 覆盖整窗，
+                 删掉行定义会让它们的跨行语义失去依据。当前内容为空，Auto → 0 高。 -->
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- 「远端控制」红色横幅已于 2026-10-06 删除：它是**假控件** —— 那个「停止控制」
+             按钮全仓库没有 Click、也没有代码引用，横幅在代码里被设成它本来就有的隐藏状态。
+             远端控制是计划功能（见 docs/control-authorization-2026-10-05.md），
+             等真实现时再补"有 Click + 有事件来源"的入口。 -->
+
+        <!-- 主三栏 -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="SidebarColumn" Width="240" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition x:Name="MemberColumn" Width="224" />
+            </Grid.ColumnDefinitions>
+
+            <!-- 左栏：会话列表 -->
+            <Grid Grid.Column="0"
+                  Background="{ThemeResource LayerFillColorDefaultBrush}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="48" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="56" />
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Padding="16,0">
+                    <TextBlock Text="棕仙语音"
+                               Style="{ThemeResource BodyStrongTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                               VerticalAlignment="Center" />
+                </Border>
+
+                <ScrollViewer Grid.Row="1" Padding="8,4">
+                    <StackPanel Spacing="6">
+                        <!-- 这三张卡原来是写死的"和朋友的语音/晚上看电影/远程帮家人看电脑"，
+                             纯占位假内容（用户一眼看出"群组是写死的"）→ 删掉，
+                             换成真实状态 + 联机入口。 -->
+                        <!-- 【产品化】房间列表：多个房间、点击切换、状态实时、重启还在。
+                             数据源是 RoomStore（见 RoomStore.cs），不是写死的占位。 -->
+                        <TextBlock x:Name="SidebarRoomsHeader"
+                                   Text="房间"
+                                   Margin="10,8,10,0"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                        <StackPanel x:Name="RoomsList" Spacing="2" Margin="6,2,6,0" />
+                        <TextBlock x:Name="SidebarRoomHint"
+                                   Text="还没有房间：点下面「新建 / 加入房间」"
+                                   Margin="10,4,10,0"
+                                   TextWrapping="Wrap"
+                                   Style="{ThemeResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                        <Button x:Name="SidebarConnectButton"
+                                Content="新建 / 加入房间"
+                                Margin="10,6,10,0"
+                                HorizontalAlignment="Stretch"
+                                ToolTipService.ToolTip="加一个房间（局域网扫描、粘贴邀请串、或填地址）" />
+                    </StackPanel>
+                </ScrollViewer>
+
+                <Border Grid.Row="2" Height="56"
+                        Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+                        BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                        BorderThickness="0,1,0,0"
+                        Padding="10,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Grid.Column="0" Width="32" Height="32" VerticalAlignment="Center">
+                            <Ellipse Fill="{ThemeResource AccentFillColorDefaultBrush}" />
+                            <!-- 【2026-10-07 修复】以前这里写死 Text="我"，改了名字这里也不变 -->
+                            <TextBlock x:Name="SelfAvatarText" Text="我"
+                                       Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                       FontSize="13"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+
+                        <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                            <!-- 【2026-10-07 修复】同上：这里原来也是写死的"我" -->
+                            <TextBlock x:Name="SelfNameText" Text="我" FontSize="13" FontWeight="SemiBold"
+                                       Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+                            <!-- 我的地址：对方要照这个填。以前只写在日志里，界面上看不到，
+                                 结果是"只能命令行联机"。这里直接显示出来 + 可复制。 -->
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock x:Name="MyAddressText" Text="我的地址：启动中…"
+                                           Style="{ThemeResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                           VerticalAlignment="Center" />
+                                <Button x:Name="CopyAddressButton" Content="复制"
+                                        Padding="6,0" Height="22" FontSize="11"
+                                        ToolTipService.ToolTip="复制我的地址，发给对方" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- 【恢复正常】设置齿轮：原来它和"重复的联机按钮"在同一个 StackPanel 里，
+                             我删重复入口时把整块删掉了 —— 这里补回来（设置面板是唯一入口，不能少）。 -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                    VerticalAlignment="Center" Spacing="6">
+                            <Button x:Name="SettingsButton" Background="Transparent"
+                                    BorderThickness="0" Padding="7"
+                                    ToolTipService.ToolTip="设置（设备 / 共享声音 / 房间名 / 诊断）">
+                                <FontIcon Glyph="&#xE713;" FontSize="15" />
+                            </Button>
+                        </StackPanel>
+
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- 中间：主区域 -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="48" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- 顶栏 -->
+                <Border Grid.Row="0"
+                        Background="{ThemeResource LayerFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                        BorderThickness="0,0,0,1"
+                        Padding="16,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal"
+                                    Spacing="8" VerticalAlignment="Center">
+                            <FontIcon Glyph="&#xE7F4;" FontSize="15"
+                                      Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="RoomTitleText"
+                                       Text="我的房间"
+                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                    Spacing="6" Margin="16,0,0,0" VerticalAlignment="Center">
+                            <Ellipse x:Name="QualityDot" Width="7" Height="7"
+                                     Fill="{ThemeResource TextFillColorDisabledBrush}"
+                                     VerticalAlignment="Center" />
+                            <TextBlock x:Name="QualityText"
+                                       Text="未连接"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+
+                        <!-- 这里原来有两个图标按钮（共享屏幕/共享音频）—— 它们**没有 Click**，
+                             是死按钮，而且和通话栏的真按钮重复（用户反馈"点了没反应"的一类）。
+                             按"不许写死/不留死控件"的规矩删掉。 -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                    Spacing="6" VerticalAlignment="Center">
+                            <Button x:Name="OpenRoomPanelButton" Background="Transparent"
+                                    BorderThickness="0" Padding="8"
+                                    ToolTipService.ToolTip="联机 / 换房间">
+                                <FontIcon Glyph="&#xE8AF;" FontSize="16"
+                                          Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- 主区域内容：共享画面上 / 聊天下 / 输入框 / 通话栏 -->
+                <Grid Grid.Row="1">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!--
+                      共享画面区（第 0 行）。默认折叠，共享时占上半部分。
+                      这里**不再隐藏聊天区** —— 看别人屏幕时还要能发消息，
+                      把聊天藏起来是设计错误。改成上下分栏。
+                    -->
+                    <Grid x:Name="ScreenView"
+                          Grid.Row="0"
+                          Height="380"
+                          Visibility="Collapsed"
+                          Margin="12,12,12,0">
+                        <Border CornerRadius="8" Background="Black" />
+                        <!--
+                          媒体宿主放在画面区**内部** —— 这是关键。
+                          之前它挂在根容器上、靠手算 Margin 定位，结果画在了窗口
+                          左上角 (0,0)，而画面区在 (252,60)，两者对不上，画面
+                          要么被左栏盖住、要么根本不在画面区里。
+                          放进画面区后由布局系统负责位置，不再需要任何坐标计算。
+                        -->
+                        <WebView2 x:Name="MediaHost"
+                                  Margin="1"
+                                  HorizontalAlignment="Stretch"
+                                  VerticalAlignment="Stretch" />
+                        <Border VerticalAlignment="Top" Margin="10"
+                                CornerRadius="6" Padding="8,5"
+                                Background="#B3000000">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Ellipse Width="8" Height="8" Fill="#FF4CC26A"
+                                         VerticalAlignment="Center" />
+                                <TextBlock x:Name="ScreenStatusText"
+                                           Text="屏幕共享中"
+                                           Foreground="White" FontSize="12"
+                                           VerticalAlignment="Center" />
+                                <TextBlock x:Name="ScreenDetailText"
+                                           Text=""
+                                           Foreground="#B3FFFFFF" FontSize="12"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                        <Button x:Name="ScreenViewStopButton"
+                                Content="关闭画面"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Margin="10" />
+                    </Grid>
+
+                    <ScrollViewer x:Name="ChatScroll" Grid.Row="1" Padding="16,12">
+                        <StackPanel Spacing="16">
+                            <Border x:Name="SelfCheckPanel"
+                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    Padding="14,12">
+                                <StackPanel Spacing="8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                                            <FontIcon Glyph="&#xE9D9;" FontSize="15"
+                                                      Foreground="{ThemeResource AccentFillColorDefaultBrush}"
+                                                      VerticalAlignment="Center" />
+                                            <TextBlock Text="媒体引擎"
+                                                       Style="{ThemeResource BodyStrongTextBlockStyle}"
+                                                       VerticalAlignment="Center" />
+                                            <TextBlock x:Name="EngineStatus"
+                                                       Text="启动中…"
+                                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <!-- 日志面板从主界面移走（用户："命令行还在显示"）：
+                                             主界面只留一行状态；要看日志去「设置 → 诊断」。 -->
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <TextBlock x:Name="ChatStatus"
+                                       Text="聊天未连接"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       HorizontalAlignment="Center" />
+
+                            <StackPanel x:Name="FileProgressPanel"
+                                        Visibility="Collapsed"
+                                        Orientation="Horizontal" Spacing="10"
+                                        HorizontalAlignment="Center">
+                                <TextBlock x:Name="FileProgressText"
+                                           Style="{ThemeResource CaptionTextBlockStyle}"
+                                           VerticalAlignment="Center" />
+                                <ProgressBar x:Name="FileProgressBar"
+                                             Width="180" Minimum="0" Maximum="100"
+                                             VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <StackPanel x:Name="MessagesPanel" Spacing="14">
+                                <!-- 原来这里写死了一个"今天"分隔。现在由 AddMessage 按**真实日期**
+                                     插入分隔（今天/昨天/10-05），不再写死。 -->
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <Border x:Name="InputBar" Grid.Row="2" Padding="16,12">
+                        <Grid Background="{ThemeResource ControlFillColorDefaultBrush}"
+                              BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                              BorderThickness="1"
+                              CornerRadius="8" Padding="12,0" Height="44">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="AttachFileButton" Grid.Column="0"
+                                    Background="Transparent" BorderThickness="0" Padding="4"
+                                    ToolTipService.ToolTip="发送文件">
+                                <FontIcon Glyph="&#xE723;" FontSize="16"
+                                          Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </Button>
+                            <TextBox Grid.Column="1"
+                                     x:Name="MessageInput" IsEnabled="False"
+                                     PlaceholderText="输入消息…"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     VerticalAlignment="Center" />
+                            <Button x:Name="SendMessageButton" IsEnabled="False" Grid.Column="2"
+                                    Background="Transparent" BorderThickness="0" Padding="4"
+                                    ToolTipService.ToolTip="发送">
+                                <FontIcon Glyph="&#xE724;" FontSize="16"
+                                          Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- 通话栏：第 3 行（第 2 行是输入框，两行必须分开，否则会重叠） -->
+                    <Border Grid.Row="3"
+                            x:Name="CallBar"
+                            Height="56"
+                            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+                            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                            BorderThickness="0,1,0,0"
+                            Padding="16,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Orientation="Horizontal"
+                                        Spacing="8" VerticalAlignment="Center">
+                                <Ellipse x:Name="CallStateDot" Width="9" Height="9"
+                                         Fill="{ThemeResource TextFillColorDisabledBrush}"
+                                         VerticalAlignment="Center" />
+                                <TextBlock x:Name="CallStateText"
+                                           Text="未通话"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                        Spacing="12" Margin="18,0,0,0" VerticalAlignment="Center">
+                                <TextBlock x:Name="StatsRtt" Text="延迟 —"
+                                           Style="{ThemeResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                <TextBlock x:Name="StatsLoss" Text="丢包 —"
+                                           Style="{ThemeResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                <TextBlock x:Name="StatsJitter" Text="抖动 —"
+                                           Style="{ThemeResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                <TextBlock x:Name="StatsBitrate" Text="码率 —"
+                                           Style="{ThemeResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                <TextBlock x:Name="StatsPath" Text="链路 —"
+                                           Style="{ThemeResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                <TextBlock x:Name="StatsSamples" Text="采样 —"
+                                           Style="{ThemeResource CaptionTextBlockStyle}"
+                                           FontWeight="SemiBold"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <StackPanel Orientation="Horizontal" Spacing="6"
+                                            VerticalAlignment="Center">
+                                    <TextBlock Text="麦克风"
+                                               Style="{ThemeResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                                    <Border Width="60" Height="6" CornerRadius="3"
+                                            Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                                            VerticalAlignment="Center">
+                                        <Border x:Name="MicLevelBar"
+                                                Width="0" Height="6" CornerRadius="3"
+                                                HorizontalAlignment="Left"
+                                                Background="{ThemeResource ZxSpeakingBrush}" />
+                                    </Border>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                        Spacing="8" VerticalAlignment="Center">
+                                <Button x:Name="ShareScreenButton"
+                                        Content="共享屏幕" IsEnabled="False" />
+                                <Button x:Name="StopShareButton"
+                                        Content="停止共享" IsEnabled="False"
+                                        ToolTipService.ToolTip="停止本机屏幕共享" />
+                                <ComboBox x:Name="DenoiseCombo"
+                                          MinWidth="112" SelectedIndex="1"
+                                          ToolTipService.ToolTip="降噪档位">
+                                    <ComboBoxItem Content="降噪：关" Tag="off" />
+                                    <ComboBoxItem Content="降噪：标准" Tag="normal" />
+                                    <ComboBoxItem Content="降噪：强力" Tag="strong" />
+                                </ComboBox>
+                                <!-- 原生视频开关已移进「设置 → 诊断与实验功能」 -->
+                                <Button x:Name="CallButton"
+                                        Content="加入语音"
+                                        Style="{ThemeResource AccentButtonStyle}" />
+                                <Button x:Name="MuteButton"
+                                        Content="静音" IsEnabled="False" />
+                                <!-- C4：录音自检是测试性入口，移进「设置 → 诊断与实验功能」
+                                     （按钮名保留 RecordButton，代码接线不变） -->
+                                <Button x:Name="HangupButton"
+                                        Content="挂断" IsEnabled="False"  Visibility="Collapsed"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!-- 右栏：成员列表 -->
+            <Grid Grid.Column="2"
+                  Background="{ThemeResource LayerFillColorDefaultBrush}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="48" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Padding="16,0">
+                    <TextBlock x:Name="MemberCountText" Text="成员 —"
+                               Style="{ThemeResource CaptionTextBlockStyle}"
+                               FontWeight="SemiBold"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                               VerticalAlignment="Center" />
+                </Border>
+
+                <!-- 成员列表：由代码按 roster 事件重建。
+                     以前这里是写死的三行（"朋友A/朋友B/我"）—— 实际只连上一个人时
+                     也照样显示，看着就像假软件。数据其实早就在 roster.peers 里。 -->
+                <ScrollViewer Grid.Row="1" Padding="8,0"
+                              VerticalScrollBarVisibility="Auto">
+                    <StackPanel x:Name="MemberList" Spacing="2" />
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+        <!-- ================================================================
+             第一屏：起名字 → 选「自动扫描房间」或「填对方地址」。
+             为什么要有：这三个控件以前挤在左栏底部（240px 的栏里放 206px 的下拉框），
+             溢出重叠 —— 用户截图报的就是这个 bug；而且新用户进来看不懂该干嘛。
+             ================================================================ -->
+        <!-- 第一屏。两个坑都是用户看出来的：
+             ① 没写 Grid.RowSpan → 它落进第 0 行（Auto 的横幅行）把那一行撑大，主界面被挤到下面；
+             ② 底刷在暗色主题下偏浅，整页发灰。
+             现在：覆盖整窗（RowSpan=2）+ 用窗口标准底色。 -->
+        <Grid x:Name="WelcomeOverlay" Grid.RowSpan="2" Visibility="Collapsed"
+              Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+            <!-- 铺满整页而不是"卡片浮在中间"：用户反馈独立窗口后四周留深色边。
+                 现在自己就是页面，任何窗口尺寸都不会出现边框。 -->
+            <Border Padding="28" BorderThickness="0" CornerRadius="0"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+              <!-- 【2026-10-07 修复】内容必须能滚动：加了"方式三：创建房间"之后，
+                   内容总高超过窗口的 620，最底部的「先进入主界面」被**挤出窗口外**
+                   （实测 UIA 里 `WelcomeEnterButton` 是 NOT_IN_TREE ⇒ 用户根本点不到）。
+                   加 ScrollViewer 后任何窗口尺寸都点得到全部按钮。 -->
+              <ScrollViewer VerticalScrollBarVisibility="Auto"
+                            HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="12" MaxWidth="440" HorizontalAlignment="Center">
+                    <TextBlock Text="欢迎使用棕仙语音" FontSize="20" FontWeight="SemiBold" />
+                    <TextBlock Text="先给自己起个名字，然后找到对方"
+                               Style="{ThemeResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                    <TextBox x:Name="WelcomeNameBox" Header="你的名字"
+                             PlaceholderText="别人看到的称呼" />
+                    <TextBlock Text="方式一：自动扫描局域网里的房间"
+                               Style="{ThemeResource BodyStrongTextBlockStyle}" Margin="0,6,0,0" />
+                    <ComboBox x:Name="RoomListCombo" HorizontalAlignment="Stretch" MinWidth="300"
+                              PlaceholderText="正在扫描…（对方开着应用就会出现）"
+                              DisplayMemberPath="Display"
+                              IsEditable="True"
+                              TextSubmitted="OnRoomSearchSubmitted"
+                              Loaded="OnRoomSearchLoaded" />
+                    <Button x:Name="JoinRoomButton" Content="加入选中的房间"
+                            HorizontalAlignment="Stretch" />
+                    <!-- 【③ 修复】自动扫描的房间里，"选中"这一步对用户不直观：
+                         没在下拉框里点过任何一项时，点「加入选中的房间」只会得到一句
+                         "先选一个"，用户就认为"自动扫描加入不可用"。
+                         这里加一个一键入口：扫到的第一个房间直接加入。 -->
+                    <Button x:Name="JoinScannedButton" Content="加入扫描到的房间（一键）"
+                            HorizontalAlignment="Stretch" />
+                    <TextBlock Text="方式二：填对方的地址"
+                               Style="{ThemeResource BodyStrongTextBlockStyle}" Margin="0,6,0,0" />
+                    <TextBox x:Name="PeerAddressBox"
+                             PlaceholderText="例如 192.168.1.5:45891（对方界面上那行「我的地址」）" />
+                    <Button x:Name="JoinButton" Content="连接这个地址"
+                            HorizontalAlignment="Stretch" />
+                    <!-- 【产品化】原来只有"加入"，没有"创建" —— 本机想开个房间是走不通的
+                         （点"连接这个地址"必须先有别人的地址）。这里补上创建入口：
+                         给房间起名 → 本机当房主，并把邀请串显示出来给对方粘贴。 -->
+                    <TextBlock Text="方式三：自己创建一个房间（本机当房主）"
+                               Style="{ThemeResource BodyStrongTextBlockStyle}" Margin="0,6,0,0" />
+                    <TextBox x:Name="CreateRoomNameBox"
+                             PlaceholderText="房间名，例如 周末开黑（对方要用同一个名字）"
+                             TextChanged="OnCreateRoomNameChanged" />
+                    <Button x:Name="CreateRoomButton" Content="创建房间"
+                            HorizontalAlignment="Stretch" />
+                    <TextBlock x:Name="CreateRoomInviteText"
+                               Visibility="Collapsed"
+                               TextWrapping="Wrap" IsTextSelectionEnabled="True"
+                               Style="{ThemeResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                    <Button x:Name="WelcomeEnterButton" Content="先进入主界面（不联机）"
+                            HorizontalAlignment="Stretch" Margin="0,6,0,0" />
+                </StackPanel>
+              </ScrollViewer>
+            </Border>
+        </Grid>
+
+        <!-- 设置浮层。
+             两个坑都记着：
+             ① 必须 Grid.RowSpan="2" —— 否则落进第 0 行（Auto 的横幅行），把主界面挤下去（第一屏踩过）；
+             ② 背景用不透明整页底色 —— 原来的 #99000000 半透明黑就是用户说的"黑边"。
+             注：曾尝试把它搬进独立 WinUI 窗口，实测内容整块渲染不出来（全黑），
+             所以独立 SettingsWindow 要用自己的 XAML 重做，那是后面的事。
+        -->
+        <Grid x:Name="SettingsOverlay" Grid.RowSpan="2" Visibility="Collapsed"
+              Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+            <Border Padding="24" BorderThickness="0" CornerRadius="0"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <!-- 【2026-10-06 布局修复】原来是 StackPanel VerticalAlignment="Top" +
+                     ScrollViewer MaxHeight="820"。窗口只有 773 px 高时，820 的硬上限让面板内容
+                     冲出窗口下沿：开关本体（ToggleSwitch 的胶囊）只剩 6 px 在可视区（像素取证
+                     y=868..873，下面全被窗口边缘裁掉），用户**点不到**它、自检也点不动。
+                     现在改成两行 Grid：表头 Auto / 内容 *，ScrollViewer 只吃"剩下的高度"，
+                     视口变矮也不会溢出 —— 内容一律可滚到。 -->
+                <Grid MaxWidth="520" HorizontalAlignment="Center" VerticalAlignment="Stretch"
+                      Margin="0,24,0,24">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="0,0,0,14">
+                        <TextBlock Text="设置" FontSize="18" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" />
+                        <Button x:Name="SettingsCloseButton" Content="关闭"
+                                HorizontalAlignment="Right" />
+                    </Grid>
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel Spacing="14" Width="430">
+                            <TextBlock Text="通话" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                            <TextBox x:Name="SelfNameBox" Header="我的名字"
+                                     PlaceholderText="别人看到的称呼" />
+                            <TextBox x:Name="RoomNameBox" Header="房间名"
+                                     PlaceholderText="两边要填一样的房间名（默认 default）" />
+                            <ComboBox x:Name="MicDeviceCombo" Header="麦克风"
+                                      HorizontalAlignment="Stretch" MinWidth="300"
+                                      PlaceholderText="系统默认设备" />
+                            <ComboBox x:Name="SpkDeviceCombo" Header="扬声器"
+                                      HorizontalAlignment="Stretch" MinWidth="300"
+                                      PlaceholderText="系统默认设备" />
+                            <!-- 【诊断入口】点一下播 1 秒提示音：
+                                 能听到 ⇒ 扬声器/音量没问题（那"听不到对方"要往别处查）；
+                                 听不到 ⇒ 问题就在这一环。用于区分"链路问题"与"设备问题"。 -->
+                            <Button x:Name="TestSpeakerButton" Content="测试扬声器（播 1 秒提示音）"
+                                    HorizontalAlignment="Stretch" Margin="0,4,0,0"
+                                    ToolTipService.ToolTip="播放到当前选定的扬声器" />
+                            <!-- 跨网段中继（TURN）。同一局域网/已用组网工具时留空即可。
+                                 填了之后由 C# 保存到应用目录的 app-config.json（AppConfig 统一读写），
+                                 并下发给页面（zxEngine.setIceConfig → 页面的 window.zxIceConfig）。
+                                 【已删】原来这里那个「共享屏幕时同时共享系统声音」开关是假开关：
+                                 全仓库无任何代码引用，真开关是下面的 ShareAudioToggle + ShareAudioAppCombo。 -->
+                            <TextBlock Text="跨网段中继（TURN）" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="同一局域网或已用组网工具时留空；跨网段直连不通时填中继服务器。"
+                                       TextWrapping="Wrap" Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBox x:Name="TurnUrlBox" Header="中继服务器"
+                                     PlaceholderText="turn:服务器地址:3478" />
+                            <TextBox x:Name="TurnUserBox" Header="中继用户名"
+                                     PlaceholderText="可留空" />
+                            <PasswordBox x:Name="TurnPasswordBox" Header="中继密码"
+                                         PlaceholderText="可留空" />
+                            <TextBlock Text="高级" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                            <!-- ============ 共享电脑声音（独立功能） ============
+                                 它是**独立**的：不依赖屏幕共享、不依赖通话；自己一个开关。
+                                 应用列表来自 Windows 音频会话枚举（zxprobe apps），不是写死的。 -->
+                            <TextBlock Text="共享电脑声音" Style="{ThemeResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Text="把本机正在发声的应用（或整个系统）的声音单独传给对方。与屏幕共享互不影响。"
+                                       TextWrapping="Wrap" Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <ToggleSwitch x:Name="ShareAudioToggle" Header="开启共享电脑声音"
+                                          OffContent="关" OnContent="开" />
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <ComboBox x:Name="ShareAudioAppCombo" Width="300"
+                                          PlaceholderText="选择要共享的声音来源" />
+                                <Button x:Name="RefreshShareAppsButton" Content="刷新列表" />
+                            </StackPanel>
+                            <TextBlock x:Name="ShareAudioStatusText" Text="未共享" TextWrapping="Wrap"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                            <Expander x:Name="DiagExpander" Header="诊断与实验功能"
+                                      HorizontalAlignment="Stretch">
+                                <StackPanel Spacing="8" Margin="0,6,0,0">
+                                    <!-- 引擎日志搬到这里（原来在主界面，用户说"命令行还在显示"） -->
+                                    <ScrollViewer x:Name="EngineLogScroll" MaxHeight="200"
+                                                  VerticalScrollBarVisibility="Auto">
+                                        <TextBlock x:Name="EngineLogView"
+                                                   Text="引擎日志（初始化中…）"
+                                                   TextWrapping="Wrap"
+                                                   FontFamily="Cascadia Mono, Consolas, monospace"
+                                                   FontSize="12"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    </ScrollViewer>
+                                    <Button x:Name="RunSelfCheckButton" Content="检测麦克风"
+                                            HorizontalAlignment="Stretch" IsEnabled="False" />
+                                    <!-- C4：从通话栏搬进来的测试性入口 -->
+                                    <Button x:Name="RecordButton" Content="录音自检（录 3 秒试听）"
+                                            HorizontalAlignment="Stretch"
+                                            ToolTipService.ToolTip="录 3 秒麦克风（含当前降噪处理）保存为 WAV" />
+                                    <ToggleButton x:Name="NativeVideoToggle" Content="启用原生视频通道（实验）"
+                                                  HorizontalAlignment="Stretch" />
+                                    <Button x:Name="AudioCapButton" Content="检测「单个应用音频」"
+                                            HorizontalAlignment="Stretch" />
+                                    <Button x:Name="LogFolderButton" Content="打开日志文件夹"
+                                            HorizontalAlignment="Stretch" />
+                                    <Button x:Name="DiagCopyButton" Content="复制诊断信息到剪贴板"
+                                            HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Expander>
+                            <TextBlock x:Name="AboutText"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                       TextWrapping="Wrap"
+                                       Text="棕仙语音 v1.1 · 语音通话与屏幕共享（原生视频通道 + 局域网自动发现）" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

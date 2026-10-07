@@ -1,0 +1,1 @@
+=== [OK] D3D11      [OK] Windows.Graphics.Capture [X] CreateForMonitor 

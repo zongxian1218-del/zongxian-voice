@@ -1,0 +1,7 @@
+﻿=== 屏幕采集 + 硬件编码 验证 ===
+时长 5 秒，输出 capture_probe.h264
+
+[OK] D3D11 设备已创建（feature level 0xB000）
+     适配器: NVIDIA GeForce RTX 3060 Ti
+[OK] Windows.Graphics.Capture 受支持
+[X] CreateForMonitor 失败 hr=0x80070005

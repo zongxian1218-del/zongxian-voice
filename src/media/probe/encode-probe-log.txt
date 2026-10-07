@@ -1,0 +1,47 @@
+﻿=== 硬件 H.264 编码验证（合成输入，与采集解耦）===
+目标 1920x1080 @30fps  12.0 Mbps  时长 3 秒  输出 encode-probe.h264
+
+CoInitializeEx hr=0x00000000
+--- 1. 编码器枚举 ---
+  共找到 5 个 NV12→H.264 编码器：
+    [0] Intel® Quick Sync Video H.264 Encoder MFT   异步=1
+    [1] NVIDIA H.264 Encoder MFT   异步=1
+    [2] H264 Encoder MFT   异步=0
+    [3] Intel® Quick Sync Video H.264 Encoder MFT   异步=1
+    [4] Microsoft AVC DX12 Encoder   异步=0
+
+  硬件编码器:
+    * Intel® Quick Sync Video H.264 Encoder MFT  异步=1
+    * NVIDIA H.264 Encoder MFT  异步=1
+    * Intel® Quick Sync Video H.264 Encoder MFT  异步=1
+
+--- 2. 激活编码器 ---
+  优先顺序: NVIDIA H.264 Encoder MFT > Intel® Quick Sync Video H.264 Encoder MFT > Intel® Quick Sync Video H.264 Encoder MFT > H264 Encoder MFT > Microsoft AVC DX12 Encoder
+  已激活: NVIDIA H.264 Encoder MFT
+  异步 MFT: 1   D3D11 感知: 1
+  设置 MF_TRANSFORM_ASYNC_UNLOCK hr=0x00000000
+
+--- 3. 协商媒体类型 ---
+  SetOutputType(H.264 1920x1080@30 12.0Mbps) hr=0x00000000
+  SetInputType(NV12 1920x1080 stride=1920) hr=0x00000000
+  实际输出: 1920x1080 @30/1 fps  12.00 Mbps
+
+--- 4. 编码合成帧 ---
+          事件驱动模式: 是（异步 MFT 标准做法）
+          编码输出前 12 字节: 00 00 00 01 09 10 00 00 00 01 67 64 
+          格式判定: Annex-B（带起始码，可直接走自建 UDP）
+          输出样本 #0  49082 字节  时间戳 0
+          输出样本 #1  38481 字节  时间戳 333333
+          输出样本 #2  52832 字节  时间戳 666666
+          喂入帧数 90 / 取回编码样本 90 / 共 4768971 字节
+          耗时 1.379 秒  编码速度 65.3 fps（2.18 倍实时）
+          实测码率 27.66 Mbps
+
+=== 结果 ===
+  编码器      : NVIDIA H.264 Encoder MFT
+  喂入 / 输出 : 90 / 90
+  码流字节    : 4768971
+  错误        : ProcessOutput 失败 hr=0x8000FFFF
+  文件大小    : 4768971 字节 (encode-probe.h264)
+
+  [X] 编码未通过 —— 按上面的错误定位。

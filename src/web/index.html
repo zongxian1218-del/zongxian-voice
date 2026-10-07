@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="棕仙的传输软件：浏览器之间点对点直传大文件与文件夹同步，端到端加密、不限速、不落服务器。">
+<title>__APP_NAME__ —— 朋友间大文件直传与文件夹同步</title>
+<link rel="icon" href="__APP_ICON_SMALL__">
+<link rel="apple-touch-icon" href="__APP_ICON__">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- 标题栏 -->
+  <header class="top">
+    <div class="brand">
+      <img class="applogo" src="__APP_ICON__" alt="">
+      <span class="brandname">__APP_NAME__</span>
+      <small id="verText">v__APP_VER__</small>
+    </div>
+    <div class="chips">
+      <span class="chip" id="sigChip" title="信令通道状态">信令：未连接</span>
+      <span class="chip" id="connChip" title="与对方的直连状态">未连接</span>
+      <span class="chip hidden" id="rttChip"></span>
+      <span class="topdiv" aria-hidden="true"></span>
+      <button class="icon" id="btnTheme" title="切换浅色/深色" aria-label="切换主题">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.2"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6"/>
+        </svg>
+      </button>
+      <button class="icon" id="btnHelp" title="使用帮助" aria-label="使用帮助">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/><path d="M9.4 9.2a2.7 2.7 0 1 1 3.4 2.6c-.6.2-.9.7-.9 1.3v.5"/><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"/>
+        </svg>
+      </button>
+      <button class="icon" id="btnSettings" title="设置" aria-label="设置">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 1 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 15a2 2 0 1 1 0-4 1.7 1.7 0 0 0 1.5-2.6l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 4.1a2 2 0 1 1 4 0 1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 21 11a2 2 0 1 1 0 4z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ============ 连接 ============ -->
+    <section id="connectPane">
+      <div class="hero">
+        <div class="heroglow" aria-hidden="true">
+          <img class="applogo" src="__APP_ICON__" alt="">
+        </div>
+        <h1>不装软件、不限速、不要公网 IP</h1>
+        <p>点对点直连传输大文件，浏览器之间加密传送；连不上会自动切换信令线路，也可配 TURN 中继兜底。<strong>文件内容不经过任何服务器。</strong></p>
+        <ul class="herofacts">
+          <li><i class="factdot"></i>端到端加密</li>
+          <li><i class="factdot"></i>不落服务器</li>
+          <li><i class="factdot"></i>零安装</li>
+        </ul>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <h2><span class="step">1</span> 我要发送（生成取件码）</h2>
+          <p>把取件码或链接发给朋友，等他连进来。</p>
+          <button class="primary big" id="btnCreate">生成取件码</button>
+          <div id="codeBox" class="hidden">
+            <div class="codebox">
+              <div class="codebox-main">
+                <span class="codelabel">取件码 · 9 位</span>
+                <div class="code" id="codeText">-</div>
+                <div class="codetip">念给朋友听 / 长按选中也可以复制</div>
+              </div>
+              <div class="qrwrap">
+                <canvas id="qrCanvas" class="qr" width="200" height="200"></canvas>
+                <span class="qrcap">扫码打开</span>
+              </div>
+            </div>
+            <div class="linkrow" id="linkRow">
+              <input id="linkText" readonly aria-label="分享链接">
+            </div>
+            <div class="row" style="margin-top:8px">
+              <button class="primary" id="btnCopyLink">复制链接</button>
+            </div>
+            <div class="tiny muted" id="shareHint" style="margin-top:8px"></div>
+            <div class="waiting"><span class="dot"></span> 等待朋友连接…</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2><span class="step">2</span> 我要接收（输入取件码）</h2>
+          <p>输入朋友给你的 9 位取件码。</p>
+          <div class="joinrow">
+            <input id="joinCode" placeholder="例如 K7M2P9XQ4" maxlength="14" autocomplete="off" spellcheck="false" aria-label="取件码">
+            <button class="primary" id="btnJoin">连接</button>
+          </div>
+          <p class="tiny muted" id="joinHint" style="margin-top:10px">提示：手机可以直接扫对方屏幕上的二维码。</p>
+        </div>
+      </div>
+
+      <div class="tips">
+        <div><b>为什么快？</b>文件在两台设备之间直接跑，不落服务器、不排队、不限速。速度上限 = 你们双方的上行带宽或局域网带宽。</div>
+        <div><b>安全吗？</b>连接由 DTLS 端到端加密，取件码只用于牵线；服务器只帮忙交换连接地址，看不到文件内容。</div>
+        <div><b>连不上怎么办？</b>程序会自动尝试多条线路；若双方都在严格的企业网/运营商大内网，可用 TURN 中继兜底（见使用说明）。</div>
+      </div>
+
+      <div id="connTrouble" class="trouble hidden"></div>
+
+      <div class="logwrap">
+        <div class="loghead"><span>运行日志</span> <button class="link" id="btnClearLog">清空</button></div>
+        <div class="log" id="logBox"></div>
+      </div>
+    </section>
+
+    <!-- ============ 会话 ============ -->
+    <section id="sessionPane" class="hidden">
+      <div class="peerbar">
+        <div class="peerinfo">
+          <span class="dot ok"></span>
+          <b id="peerName">对方</b>
+          <span class="muted" id="connKind"></span>
+        </div>
+        <div class="peeract">
+          <button class="danger ghost" id="btnLeave">断开连接</button>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="files">文件传输</button>
+        <button class="tab" data-tab="sync">文件夹同步</button>
+      </div>
+
+      <!-- 文件传输 -->
+      <div id="tab-files" class="tabpane">
+        <div class="dropzone" id="dropZone">
+          <div class="bigicon">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4l1.6 2H19.5A1.5 1.5 0 0 1 21 9.5v7A1.5 1.5 0 0 1 19.5 18h-15A1.5 1.5 0 0 1 3 16.5z"/>
+              <path d="M12 16v-5M9.8 13.2 12 11l2.2 2.2"/>
+            </svg>
+          </div>
+          <div class="dztitle">把文件或文件夹拖到这里</div>
+          <div class="dzsub">松开鼠标立即开始传输，文件不经过服务器</div>
+          <div class="row center">
+            <button class="primary big" id="btnPickFiles">选择文件</button>
+            <button class="big ghost" id="btnPickFolder">选择文件夹</button>
+          </div>
+          <div class="tiny muted" id="dropHint" style="margin-top:10px"></div>
+        </div>
+
+        <div class="savebar">
+          <span>接收位置：<b id="saveDirName">浏览器下载目录（大文件请选择文件夹）</b></span>
+          <span class="row">
+            <button id="btnPickSaveDir">选择保存目录</button>
+            <button id="btnPickSaveDir2" class="hidden">重新选择</button>
+          </span>
+        </div>
+
+        <div class="speedbar">
+          <span>总速度 <b id="totalSpeed">-</b></span>
+          <span class="muted" id="queueInfo"></span>
+        </div>
+
+        <div id="fileList" class="filelist"></div>
+      </div>
+
+      <!-- 文件夹同步 -->
+      <div id="tab-sync" class="tabpane hidden">
+        <div class="card">
+          <h2>文件夹双向同步</h2>
+          <p>选一个本地文件夹，双方各自的文件夹保持内容一致（支持增量、断点续传、自动监控）。</p>
+          <div class="row wrap">
+            <button id="btnPickSyncDir" class="primary">选择本地同步文件夹</button>
+            <span class="muted" id="syncDirName">未选择</span>
+          </div>
+          <div class="row wrap mt" style="gap:16px">
+            <label class="row" style="gap:6px">同步方式
+              <select id="syncMode">
+                <option value="two-way">双向（互相同步）</option>
+                <option value="up">单向：只把本机推给对方</option>
+                <option value="down">单向：只把对方拉过来</option>
+              </select>
+            </label>
+            <label class="switch"><input type="checkbox" id="syncDelete"><span class="track"><span class="thumb"></span></span><span>同步删除</span></label>
+            <label class="switch"><input type="checkbox" id="syncWatch"><span class="track"><span class="thumb"></span></span><span>自动监控（每 5 秒，仅发起方生效）</span></label>
+            <button id="btnSyncNow" class="primary">立即同步</button>
+          </div>
+          <p class="tiny muted" style="margin-top:12px">提示：双方都要在各自机器上选择同步文件夹，否则对方会提示"未设置同步目录"。</p>
+          <div id="syncPlan" class="syncplan hidden"></div>
+        </div>
+        <div class="logwrap">
+          <div class="loghead"><span>同步日志</span></div>
+          <div class="log" id="syncLog"></div>
+        </div>
+      </div>
+
+      <!-- 连接诊断：速度慢的时候用它判断"慢在哪" -->
+      <div class="card diag">
+        <div class="diaghead">
+          <h3>连接诊断</h3>
+          <span class="muted tiny" id="dgHint">连接后自动开始采样（每秒一次）</span>
+          <button class="subtle" id="btnDiagCopy" style="margin-left:auto">复制诊断信息</button>
+        </div>
+        <div class="diaggrid">
+          <div class="dgitem"><span class="dgk">链路</span><span class="dgv" id="dgLink">等待连接</span></div>
+          <div class="dgitem"><span class="dgk">延迟 RTT</span><span class="dgv" id="dgRtt">-</span></div>
+          <div class="dgitem"><span class="dgk">抖动</span><span class="dgv" id="dgJit">-</span></div>
+          <div class="dgitem"><span class="dgk">可用带宽</span><span class="dgv" id="dgBw">-</span></div>
+          <div class="dgitem"><span class="dgk">实时速度</span><span class="dgv" id="dgSpeed">-</span></div>
+          <div class="dgitem"><span class="dgk">峰值 / 平均</span><span class="dgv" id="dgPeak">-</span></div>
+          <div class="dgitem"><span class="dgk">卡顿次数</span><span class="dgv" id="dgStall">-</span></div>
+          <div class="dgitem"><span class="dgk">候选类型</span><span class="dgv" id="dgCand">-</span></div>
+        </div>
+        <div class="chartwrap">
+          <canvas id="dgChart" height="52"></canvas>
+        </div>
+        <div class="dgverdict" id="dgVerdict">连接后这里会给出"慢在哪"的判断。</div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span>__APP_NAME__ v__APP_VER__ · 构建 __APP_BUILD__</span>
+    <span class="muted">P2P 直连 · 端到端加密 · 不限速 · 无广告</span>
+  </footer>
+</div>
+
+<!-- 隐藏输入 -->
+<input type="file" id="fileInput" multiple hidden>
+<input type="file" id="dirInput" webkitdirectory directory multiple hidden>
+
+<!-- 设置 -->
+<dialog id="settingsDialog" class="dlg">
+  <form method="dialog">
+    <header class="dlghead">
+      <h2>设置</h2>
+      <p class="tiny muted">改动在下次建立连接时生效；留空即用默认线路。</p>
+    </header>
+    <div class="dlgbody">
+      <label class="field">设备名称（对方看到的名字）
+        <input id="setDeviceName" maxlength="24">
+      </label>
+      <label class="field">TURN 中继服务器（可选，双方都是严格 NAT 时填）
+        <input id="setTurnUrl" placeholder="turn:你的服务器:3478 或 turns:服务器:5349">
+      </label>
+      <label class="field">中继服务器（P2P 打洞失败时自动回退；一台 5 元/月的公网 VPS 即可）
+        <input id="setRelayUrl" placeholder="wss://你的服务器:9443">
+      </label>
+      <label class="switch" style="margin-top:8px"><input type="checkbox" id="setForceRelay"><span class="track"><span class="thumb"></span></span><span>强制走中继（跳过 P2P，测试/极端网络用）</span></label>
+      <div class="row">
+        <label class="field grow">TURN 用户名<input id="setTurnUser"></label>
+        <label class="field grow">TURN 密码<input id="setTurnPass" type="password"></label>
+      </div>
+      <div class="row">
+        <label class="field grow">数据分片大小
+          <select id="setChunk">
+            <option value="16384">16 KB（最稳）</option>
+            <option value="65536">64 KB（推荐）</option>
+            <option value="131072">128 KB（高速）</option>
+            <option value="262144">256 KB（极限）</option>
+          </select>
+        </label>
+        <label class="field grow">发送缓冲上限
+          <select id="setBuffer">
+            <option value="4194304">4 MB（保守）</option>
+            <option value="8388608">8 MB</option>
+            <option value="12582912">12 MB（推荐，浏览器硬上限约 16MB）</option>
+          </select>
+        </label>
+      </div>
+      <label class="field">信令服务器（每行一个，按顺序尝试）
+        <textarea id="setBrokers" rows="3" placeholder="wss://broker.emqx.io:8084/mqtt"></textarea>
+      </label>
+      <div class="row mt">
+        <button class="danger ghost" id="btnClearResume" type="button">清空断点续传缓存</button>
+        <button class="danger ghost" id="btnClearSync" type="button">清空同步状态</button>
+      </div>
+      <p class="tiny muted" id="capText" style="margin-top:12px"></p>
+    </div>
+    <footer class="dlgfoot">
+      <button value="cancel">取消</button>
+      <button class="primary" id="btnSaveSettings" value="ok">保存</button>
+    </footer>
+  </form>
+</dialog>
+
+<div id="toasts"></div>
+
+<!--SCRIPTS-->
+</body>
+</html>

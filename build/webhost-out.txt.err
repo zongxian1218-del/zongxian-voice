@@ -1,0 +1,3 @@
+127.0.0.1 - "GET /swiftdrop.html HTTP/1.1" 200 -
+127.0.0.1 - code 404, message File not found
+127.0.0.1 - "GET /secret HTTP/1.1" 404 -

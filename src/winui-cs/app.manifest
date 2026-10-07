@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  app.manifest —— 应用清单
+
+  两个关键点：
+
+  1) DPI 感知
+     声明 PerMonitorV2，WinUI 3 才能在高 DPI 与多显示器（不同缩放比）下
+     正确渲染。不声明的话界面会糊，或者跨屏拖动时不重新布局。
+
+  2) 不请求管理员权限（asInvoker）
+     这一条是有意的，而且和"远端控制"直接相关：
+       · 以普通权限运行 → 无法把输入注入到提权窗口（UIPI 限制），
+         因此远端控制**永远无法替你点 UAC 弹窗**。这既是安全特性，
+         也意味着我们不需要管理员权限。
+       · 如果将来要支持"控制以管理员运行的程序"，才需要考虑提升，
+         但那会带来一整套权限与信任问题，当前明确不做。
+-->
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <assemblyIdentity version="1.0.0.0" name="ZongxianVoice.app" />
+
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
+      <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware>
+    </windowsSettings>
+  </application>
+
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
+    <security>
+      <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <!-- Windows 10 / 11 -->
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+    </application>
+  </compatibility>
+</assembly>
