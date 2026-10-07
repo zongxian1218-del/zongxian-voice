@@ -11,6 +11,7 @@
 | 名称 | 发布线 | 体积 | 构建/打包时间 | 溯源 | 备注 |
 |---|---|---|---|---|---|
 | `winui\` | — | — | — | 由 `build\release.py` 生成 | WinUI 打包目录（由 build\release.py 生成；内含 tools\zxprobe.exe，守卫会校验与 dist\zxprobe.exe 逐字节一致） |
+| `zxprobe.exe` | 引擎/工具产物 | 0.18 MB | 2026-10-07 14:37 | 由 build\release.py 规范化 |
 
 > 版本发布记录由 `build/release.py --version NN` 自动追加到本表。
 > 本仓库从 0 开始；此前属于「文件传输」产品的登记已挪到

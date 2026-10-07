@@ -384,6 +384,17 @@ def clamp_window_on_screen(hwnd):
     """
     if not hwnd:
         return
+    # 【2026-10-07】窗口被最小化时，GetWindowRect 给的是 (-32000,-32000)，
+    # 夹回会把"最小化"当成"位置不对"，最后报"窗口没归位"——那是**测试没先恢复窗口**，
+    # 不是产品问题（发版时实测踩到：release 跑到界面自检时窗口正好被最小化）。
+    # 所以先尝试恢复（SW_RESTORE），再夹位置。
+    try:
+        if u32.IsIconic(hwnd):
+            say('窗口处于最小化，先恢复（SW_RESTORE）')
+            u32.ShowWindow(hwnd, 9)          # SW_RESTORE
+            time.sleep(0.5)
+    except Exception:
+        pass
     r = wt.RECT()
     u32.GetWindowRect.argtypes = [ctypes.c_void_p, ctypes.POINTER(wt.RECT)]
     if not u32.GetWindowRect(hwnd, ctypes.byref(r)):
