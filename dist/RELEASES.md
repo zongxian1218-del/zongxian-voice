@@ -12,6 +12,7 @@
 |---|---|---|---|---|---|
 | `winui\` | — | — | — | 由 `build\release.py` 生成 | WinUI 打包目录（由 build\release.py 生成；内含 tools\zxprobe.exe，守卫会校验与 dist\zxprobe.exe 逐字节一致） |
 | `zxprobe.exe` | 引擎/工具产物 | 0.18 MB | 2026-10-07 14:37 | 由 build\release.py 规范化 |
+| `棕仙语音-测试版-v1.zip` | 语音测试版 | 32.7 MB | 2026-10-07 18:19 | sha256 `53abca28ca318ce5` | 326 条目 |
 
 > 版本发布记录由 `build/release.py --version NN` 自动追加到本表。
 > 本仓库从 0 开始；此前属于「文件传输」产品的登记已挪到
