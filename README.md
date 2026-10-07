@@ -1,20 +1,50 @@
-# 棕仙语音（ZongxianVoice）
+# 同频（SameFreq）
 
-和朋友开黑用的**语音房**：自建信令、不经第三方服务器，语音 / 屏幕共享 / 文件传输
-都走端到端加密的点对点链路。适合**局域网**直连，也能配合组网工具（Tailscale、Radmin VPN 等）
-跨网使用。
+**不用租服务器、不用开会员，就能和朋友一起语音 —— 而且可以只把某一个应用的声音分享给对方。**
 
-> 名字来自作者的角色「棕仙」。图标与角色形象归作者所有（见「许可」一节）。
+Discord / TeamSpeak / KOOK / YY 这类软件，要么**得先有个服务器**，要么**把关键功能锁进会员**。
+这里的做法是反过来：**建房那个人的电脑就是服务器**，其他人直接连他。
+语音、画面、文件全部点对点、端到端加密，**不经过任何第三方**。
+
+> 图标与美术素材归作者所有（见「许可」一节）。
+
+## 那些要付费/装插件的，这里是什么样
+
+| 别的软件 | 这里 |
+|---|---|
+| 租服务器 / 买语音频道 | **一个人建房就行** —— 他的电脑就是信令服务器，其余人局域网自动发现或粘一串邀请码加入 |
+| **只把某个游戏 / 播放器的声音传给对方**（而不是整机混音） | **按应用独立共享** ⭐：真实枚举系统里**正在发声的应用**，挑一个单独推给对方；也能选"整个系统" |
+| 高清语音 + 降噪 | Opus 48 kbps 起步，**三档降噪**（关 / 标准 / 强）+ 静音，**免费** |
+| 屏幕共享 | 整个屏幕 / 单个窗口 |
+| 发文件 | 点对点直传，不经服务器；收到后可直接打开文件或所在文件夹 |
+| 看网络状况 | 实时显示延迟 / 丢包 / 抖动 / 码率 / 链路类型（局域网直连 or 中继） |
+
+## 先说清楚现状（免得你踩坑）
+
+这是个**早期版本**，功能已经能跑通，但**稳定性还在打磨** ——
+尤其是同机多开、跨运营商网络这些边角场景，可能会遇到连不上或需要重试的情况。
+
+它主打的方向是「**不花服务器钱也能用上核心功能**」，**不是**「比 Discord 更稳」。
+如果你要的是稳定商用级体验，现在还不是时候；如果你愿意折腾、并且正好想要
+"**只共享某个应用的声音**"这种被锁进会员的功能，那这个项目就是为你写的。
+
+bug 和需求都欢迎提 [issue](https://github.com/zongxian1218-del/zongxian-voice/issues)。
 
 <details>
 <summary><b>English</b></summary>
 
-**ZongxianVoice** — a self-hosted voice room for playing games with friends.
-One window acts as the host (it runs the signaling server locally); others join over LAN
-or a virtual LAN such as Tailscale / Radmin VPN. Voice, screen sharing, system-audio sharing
-and file transfer all run peer-to-peer over WebRTC with end-to-end encryption.
-Built with C# / WinUI 3 + WebView2 on the UI side and a small C++ audio engine.
-Licensed MIT (code); artwork excluded.
+**SameFreq** — voice chat with friends **without renting a server and without a subscription**,
+including **per-application audio sharing**: pick one running app (a game, a media player) and send
+only *its* audio to your friends, instead of the whole system mix.
+
+Whoever creates the room **becomes the server** (signaling runs inside the app);
+everyone else joins over LAN or via a virtual LAN such as Tailscale / Radmin VPN.
+Voice, screen sharing, per-app audio and file transfer are peer-to-peer and end-to-end encrypted.
+Built with C# / WinUI 3 + WebView2 plus a small C++ audio engine (WASAPI, incl. Windows
+process-loopback for per-app capture). Licensed MIT (code); artwork excluded.
+
+**Status: early.** Features work, stability is still being improved — expect rough edges,
+especially with multiple instances on one machine or across carrier networks.
 
 </details>
 
@@ -22,12 +52,13 @@ Licensed MIT (code); artwork excluded.
 
 ## 能做什么
 
+
 | 功能 | 说明 |
 |---|---|
 | **语音房** | 一端建房（本机即信令服务器），其他人**局域网自动发现**或粘邀请串加入；房间可改名、删除 |
 | **多人语音** | WebRTC 点对点，Opus 48 kbps 起步；**三档降噪**（关 / 标准 / 强），支持静音；用户可自选麦克风与扬声器 |
 | **屏幕共享** | 共享整个屏幕 / 单个窗口，对方画面在应用内显示 |
-| **共享电脑声音** | 把本机正在播放的声音推给对方（可选按应用过滤），和屏幕共享互相独立 |
+| **按应用共享声音** ⭐ | **可以只共享某一个应用的声音**（游戏 / 播放器 / 浏览器），也可以选整个系统。列表是真实枚举出来的（`IAudioSessionManager2`），不是写死的清单。和屏幕共享**互相独立**，可以只推声音不推画面 |
 | **文件传输** | 断点走数据通道直传；收到后可直接「打开文件 / 打开所在文件夹」 |
 | **文字聊天** | 房间里直接聊，不经服务器 |
 | **连接质量** | 实时显示延迟、丢包、抖动、码率、链路类型（局域网直连 / 中继） |
@@ -41,7 +72,7 @@ Licensed MIT (code); artwork excluded.
 ## 快速开始
 
 1. 到 [Releases](https://github.com/zongxian1218-del/zongxian-voice/releases) 下载最新的
-   `棕仙语音-测试版-vNN.zip`，解压到任意目录（**不要放进需要管理员权限的目录**）。
+   `同频-测试版-vNN.zip`，解压到任意目录（**不要放进需要管理员权限的目录**）。
 2. 双击 `ZongxianVoice.exe`。首次启动 Windows 会问麦克风权限，允许即可。
 3. 一端点「新建 / 加入房间」→ 给房间起个名字 → **建房**。
 4. 另一端：同一局域网下会自动出现这个房间，点一下就能加入；

@@ -52,7 +52,7 @@
                 </Grid.RowDefinitions>
 
                 <Border Grid.Row="0" Padding="16,0">
-                    <TextBlock Text="棕仙语音"
+                    <TextBlock Text="同频"
                                Style="{ThemeResource BodyStrongTextBlockStyle}"
                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
                                VerticalAlignment="Center" />
@@ -480,7 +480,7 @@
               <ScrollViewer VerticalScrollBarVisibility="Auto"
                             HorizontalScrollBarVisibility="Disabled">
                 <StackPanel Spacing="12" MaxWidth="440" HorizontalAlignment="Center">
-                    <TextBlock Text="欢迎使用棕仙语音" FontSize="20" FontWeight="SemiBold" />
+                    <TextBlock Text="欢迎使用同频" FontSize="20" FontWeight="SemiBold" />
                     <TextBlock Text="先给自己起个名字，然后找到对方"
                                Style="{ThemeResource CaptionTextBlockStyle}"
                                Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
@@ -645,7 +645,7 @@
                                        Style="{ThemeResource CaptionTextBlockStyle}"
                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                        TextWrapping="Wrap"
-                                       Text="棕仙语音 v1.1 · 语音通话与屏幕共享（原生视频通道 + 局域网自动发现）" />
+                                       Text="同频 v1.1 · 语音通话与屏幕共享（原生视频通道 + 局域网自动发现）" />
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>

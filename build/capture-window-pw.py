@@ -124,7 +124,7 @@ def capture(hwnd: int, out_path: str) -> bool:
 
 def main() -> int:
     out_dir = sys.argv[1] if len(sys.argv) > 1 else "."
-    keyword = sys.argv[2] if len(sys.argv) > 2 else "棕仙语音"
+    keyword = sys.argv[2] if len(sys.argv) > 2 else "同频"
     only_pid = int(sys.argv[3]) if len(sys.argv) > 3 else 0
     os.makedirs(out_dir, exist_ok=True)
 

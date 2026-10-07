@@ -256,7 +256,7 @@ def check_dist():
     for p in files:
         if "副本" in p.name or " - Copy" in p.name:
             problems.append(f"重复副本：{p.relative_to(dist)}")
-    voice_zips = sorted(dist.glob("棕仙语音-测试版-v*.zip"), key=lambda q: q.stat().st_mtime)
+    voice_zips = sorted(dist.glob("同频-测试版-v*.zip"), key=lambda q: q.stat().st_mtime)
     if len(voice_zips) > 1:
         keep = voice_zips[-1].name
         for p in voice_zips[:-1]:
@@ -1851,7 +1851,7 @@ def main():
             bad_markers=("error CS", "error MSB", ": error"),
         ))
         results.append(run(
-            "C# 主应用构建（winui-cs / 棕仙语音）",
+            "C# 主应用构建（winui-cs / 同频）",
             [DOTNET, "build", "ZongxianVoice.csproj", "-c", "Release", "-p:Platform=x64", "--nologo", "-v", "m"],
             ROOT / "src" / "winui-cs",
             ok_markers=("0 个错误",),

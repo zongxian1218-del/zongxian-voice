@@ -139,7 +139,7 @@ def step_package(version):
 
 def step_verify_zip(version):
     say('\n=== [6/7] 回读校验：zip 载荷与 dist\\winui 逐字节一致 ===')
-    zp = DIST / ('棕仙语音-测试版-v%s.zip' % version)
+    zp = DIST / ('同频-测试版-v%s.zip' % version)
     if not zp.is_file():
         say('  ✗ 找不到刚生成的 zip')
         return False
@@ -169,7 +169,7 @@ def step_register(version, entries, zp):
     say('\n=== [7/7] 登记 RELEASES + 隔离旧包 ===')
     # 旧包挪走（策略：挪，不删）
     QUARANTINE.mkdir(parents=True, exist_ok=True)
-    for old in DIST.glob('棕仙语音-测试版-v*.zip'):
+    for old in DIST.glob('同频-测试版-v*.zip'):
         if old.name != zp.name:
             shutil.move(str(old), str(QUARANTINE / old.name))
             say('  旧包已隔离：' + old.name)
@@ -292,9 +292,9 @@ def main():
     entries = step_verify_zip(a.version)
     if not entries:
         return 1
-    if not step_register(a.version, entries, DIST / ('棕仙语音-测试版-v%s.zip' % a.version)):
+    if not step_register(a.version, entries, DIST / ('同频-测试版-v%s.zip' % a.version)):
         return 1
-    say('\n=== 发版完成：dist\\棕仙语音-测试版-v%s.zip（%d 条目，已与 dist 逐字节校验）===' %
+    say('\n=== 发版完成：dist\\同频-测试版-v%s.zip（%d 条目，已与 dist 逐字节校验）===' %
         (a.version, entries))
     return 0
 

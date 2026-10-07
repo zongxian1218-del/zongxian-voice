@@ -34,9 +34,9 @@ internal sealed class FileStore
         var candidates = new List<string>
         {
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                         "Downloads", "棕仙语音"),
+                         "Downloads", "同频"),
             Path.Combine(AppContext.BaseDirectory, "received"),
-            Path.Combine(Path.GetTempPath(), "棕仙语音"),
+            Path.Combine(Path.GetTempPath(), "同频"),
         };
         foreach (var dir in candidates)
         {

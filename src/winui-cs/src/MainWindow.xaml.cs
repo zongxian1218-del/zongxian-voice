@@ -317,8 +317,8 @@ public sealed partial class MainWindow : Window
         InitializeComponent();
 
         Title = _externalSignalUrl is null
-            ? $"棕仙语音 — {_selfName}（房主 · 端口 {_signalPort}）"
-            : $"棕仙语音 — {_selfName}（连接 {_externalSignalUrl}）";
+            ? $"同频 — {_selfName}（房主 · 端口 {_signalPort}）"
+            : $"同频 — {_selfName}（连接 {_externalSignalUrl}）";
 
         ApplyTheme();
         ConfigureWindow();
@@ -3573,7 +3573,7 @@ public sealed partial class MainWindow : Window
         WelcomeOverlay.Visibility = Visibility.Visible;   // D3 之后它默认折叠，打开时要显式显示
         // 【2026-10-07】高度从 620 增到 780：加了「方式三：创建房间」之后内容更高，
         // 620 高时最底部的「先进入主界面」被挤出窗口（UIA 里 NOT_IN_TREE，用户点不到）。
-        var win = HostOverlay(WelcomeOverlay, "欢迎使用棕仙语音", ref _welcomeWindow, 620, 780);
+        var win = HostOverlay(WelcomeOverlay, "欢迎使用同频", ref _welcomeWindow, 620, 780);
 
         if (!_welcomeHooked)
         {
@@ -5308,7 +5308,7 @@ public sealed partial class MainWindow : Window
     private string BuildDiagnosticsText(AppAudioProbeResult? cap)
     {
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine($"棕仙语音 诊断  {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine($"同频 诊断  {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
         sb.AppendLine($"我的地址: {MyAddress()}");
         sb.AppendLine($"信令端口: {_signalPort}    房间: {_room}");
         sb.AppendLine($"原生视频开关: {(NativeVideoToggle.IsChecked == true ? "开" : "关")}");

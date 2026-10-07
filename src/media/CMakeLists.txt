@@ -1,4 +1,4 @@
-# 棕仙语音 媒体引擎
+# 同频 媒体引擎
 #
 # 刻意保持「没有第三方依赖」：所有需要的库都来自 Windows SDK 自带的那几个。
 # 这样任何人 clone 下来配好 MSVC 就能直接构建，不需要包管理器、不需要
@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.20)
 
 project(zongxian_media
     VERSION 0.1.0
-    DESCRIPTION "棕仙语音 媒体引擎（WASAPI 采集 / 降噪 / 屏幕共享 / 应用音频）"
+    DESCRIPTION "同频 媒体引擎（WASAPI 采集 / 降噪 / 屏幕共享 / 应用音频）"
     LANGUAGES CXX)
 
 if(NOT WIN32)

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  棕仙语音 · Windows 桌面端（C# / WinUI 3）
+  同频 · Windows 桌面端（C# / WinUI 3）
 
   为什么用 C# 而不是 C++：
     WinUI 3 的 C# 支持更成熟，而且**构建工具链是自包含的** ——

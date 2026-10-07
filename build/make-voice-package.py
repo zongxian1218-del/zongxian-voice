@@ -50,7 +50,7 @@ def should_skip(rel: pathlib.Path) -> str | None:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--version", required=True, help="版本号，例如 23 → 棕仙语音-测试版-v23.zip")
+    ap.add_argument("--version", required=True, help="版本号，例如 23 → 同频-测试版-v23.zip")
     ap.add_argument("--src", default="dist/winui")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
@@ -60,7 +60,7 @@ def main() -> int:
         print(f"[ERROR] 源目录不存在: {src}")
         return 2
 
-    out = DIST / f"棕仙语音-测试版-v{args.version}.zip"
+    out = DIST / f"同频-测试版-v{args.version}.zip"
 
     # 先做完整性自检：关键文件不在就别打包（打出来也是坏的）
     missing = [f for f in REQUIRED if not (src / f).is_file()]
