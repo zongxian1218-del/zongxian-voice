@@ -16,9 +16,15 @@ rem ===========================================================================
 setlocal EnableDelayedExpansion
 
 set "SRC=%~dp0..\src\media"
-set "BUILD=%TEMP%\zx-build"
+rem Intermediate dir, namespaced by repository folder name.
+rem   Was a shared "%TEMP%\zx-build": two checkouts on one machine then fight over the
+rem   same CMake cache ("source ... does not match ... used to generate cache").
+for %%I in ("%~dp0..") do set "REPONAME=%%~nxI"
+set "BUILD=%TEMP%\zx-build-!REPONAME!"
 set "DIST=%~dp0..\dist"
-set "VSROOT=D:\BuildTools"
+rem Visual Studio root. Override with:  set VSROOT=C:\path\to\BuildTools
+rem If this default does not exist, vcvars64.bat is located automatically via vswhere.
+if not defined VSROOT set "VSROOT=D:\BuildTools"
 
 if /I "%~1"=="clean" (
   echo [1/5] Cleaning %BUILD%
