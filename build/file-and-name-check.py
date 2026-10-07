@@ -79,12 +79,12 @@ print("启动 host（改名 + 发文件 + 保活）…")
 subprocess.run('start "" /b "%s" --port %d --name 房主 --set-name-test "文件测试名" '
                '--create-room-keep --room %s --file-test "%s" --log-file "%s"'
                % (EXE, H, ROOM, PAYLOAD, HL), shell=True)
-time.sleep(16)
+time.sleep(24)
 print("启动 join（加入接收）…")
 subprocess.run('start "" /b "%s" --port %d --name 加入者 --room %s '
                '--signal ws://127.0.0.1:%d/signal --log-file "%s"'
                % (EXE, J, ROOM, H, JL), shell=True)
-time.sleep(25)
+time.sleep(36)
 
 print("\n=== host 左下角名字（UIA）===")
 hp = pid_for(H)

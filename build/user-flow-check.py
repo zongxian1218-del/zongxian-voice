@@ -43,12 +43,12 @@ for f in (HL, JL):
 print("① 房主：改名 → 删房间 → 建「%s」→ 保活" % ROOM)
 subprocess.run('start "" /b "%s" --port %d --name 房主 --user-flow-host "%s" --log-file "%s"'
                % (EXE, H, ROOM, HL), shell=True)
-time.sleep(22)
+time.sleep(32)
 
 print("② 成员：改名 → 等扫描 → 一键加入")
 subprocess.run('start "" /b "%s" --port %d --name 加入者 --user-flow-join "%s" --create-room-keep --log-file "%s"'
                % (EXE, J, ROOM, JL), shell=True)
-time.sleep(35)
+time.sleep(48)
 subprocess.run(['taskkill', '/F', '/IM', 'ZongxianVoice.exe'], capture_output=True)
 time.sleep(1)
 

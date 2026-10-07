@@ -76,12 +76,12 @@ print("启动 host（建房保活 + 发文件）…")
 subprocess.run('start "" /b "%s" --port %d --name 房主 --create-room-test "%s" '
                '--create-room-keep --file-test "%s" --log-file "%s"'
                % (EXE, H, ROOM, PAYLOAD, HL), shell=True)
-time.sleep(17)
+time.sleep(26)
 print("启动 join（加入接收）…")
 subprocess.run('start "" /b "%s" --port %d --name 加入者 --room %s '
                '--signal ws://127.0.0.1:%d/signal --log-file "%s"'
                % (EXE, J, ROOM, H, JL), shell=True)
-time.sleep(22)
+time.sleep(32)
 
 jp = pid_for(J)
 print("\n=== join 界面上的打开入口（UIA）===")

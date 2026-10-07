@@ -51,7 +51,7 @@ def main():
     subprocess.run('start "" /b "%s" --port %d --name joiner --room a2 '
                    '--signal ws://127.0.0.1:%d/signal --log-file "%s"'
                    % (EXE, J, H, JL), shell=True)
-    time.sleep(45)
+    time.sleep(55)
     # 【2026-10-07 强化清场】反复杀到进程数为 0 再继续。
     #   原来只 taskkill 一次 + sleep：前一个守卫的实例没退干净就抢走端口/房间，
     #   后一个守卫会报假失败（实测：release 里"共享已开始=False"，单跑却 PASS）。

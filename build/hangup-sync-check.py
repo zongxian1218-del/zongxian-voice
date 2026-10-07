@@ -99,12 +99,12 @@ for f in (HL, JL):
 print("host 建房保活 + 发起通话…")
 subprocess.run('start "" /b "%s" --port %d --name 房主 --create-room-test "%s" '
                '--create-room-keep --call-test --log-file "%s"' % (EXE, H, ROOM, HL), shell=True)
-time.sleep(17)
+time.sleep(26)
 print("join 加入（被动接收）…")
 subprocess.run('start "" /b "%s" --port %d --name 加入者 --room %s '
                '--signal ws://127.0.0.1:%d/signal --log-file "%s"'
                % (EXE, J, ROOM, H, JL), shell=True)
-time.sleep(25)
+time.sleep(36)
 
 print("\n① 检查按钮文案 + 由 join 点「挂断」…")
 out = ps(INVOKE.replace('__PID__', str(pid_for(J))))

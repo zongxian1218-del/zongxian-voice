@@ -50,12 +50,12 @@ print("启动 host（建房保活 + 自动发起通话）…")
 subprocess.run('start "" /b "%s" --port %d --name 房主 --create-room-test "%s" '
                '--create-room-keep --call-test --log-file "%s"'
                % (EXE, H, ROOM, HL), shell=True)
-time.sleep(17)
+time.sleep(26)
 print("启动 join（加入 + 自动发起通话）…")
 subprocess.run('start "" /b "%s" --port %d --name 加入者 --room %s '
                '--signal ws://127.0.0.1:%d/signal --call-test --log-file "%s"'
                % (EXE, J, ROOM, H, JL), shell=True)
-time.sleep(40)
+time.sleep(52)
 
 ok_all = True
 for f, tag in ((HL, "host"), (JL, "join")):

@@ -79,11 +79,11 @@ for f in (HL, JL):
 print("host 建房保活 + 发起通话；join 加入…")
 subprocess.run('start "" /b "%s" --port %d --name 房主 --create-room-test "%s" '
                '--create-room-keep --call-test --log-file "%s"' % (EXE, H, ROOM, HL), shell=True)
-time.sleep(17)
+time.sleep(26)
 subprocess.run('start "" /b "%s" --port %d --name 加入者 --room %s '
                '--signal ws://127.0.0.1:%d/signal --log-file "%s"'
                % (EXE, J, ROOM, H, JL), shell=True)
-time.sleep(25)
+time.sleep(36)
 
 print("\n① 通话中，host 的合并键应该是「挂断」：")
 r1 = click(pid_for(H)) if False else subprocess.run(
@@ -98,7 +98,7 @@ time.sleep(8)
 
 print("\n③ 再点一次（加入语音）…")
 print("   " + click(pid_for(H)).replace("\n", "\n   "))
-time.sleep(20)
+time.sleep(42)
 
 hl = HL.read_text(encoding="utf-8", errors="replace") if HL.exists() else ""
 jl = JL.read_text(encoding="utf-8", errors="replace") if JL.exists() else ""

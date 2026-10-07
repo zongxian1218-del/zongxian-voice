@@ -48,12 +48,12 @@ for f in (JL, HL):
 print("启动 host（建房保活）…")
 subprocess.run('start "" /b "%s" --port %d --name 房主 --create-room-test "%s" '
                '--create-room-keep --log-file "%s"' % (EXE, H, ROOM, HL), shell=True)
-time.sleep(16)
+time.sleep(24)
 print("启动 join…")
 subprocess.run('start "" /b "%s" --port %d --name 加入者 --room %s '
                '--signal ws://127.0.0.1:%d/signal --log-file "%s"'
                % (EXE, J, ROOM, H, JL), shell=True)
-time.sleep(15)
+time.sleep(32)
 
 print("杀掉 host（模拟服务端消失）…")
 hp = pid_for(H)

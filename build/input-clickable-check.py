@@ -67,11 +67,11 @@ for f in (HL, JL):
 
 subprocess.run('start "" /b "%s" --port %d --name 房主 --create-room-test "%s" '
                '--create-room-keep --log-file "%s"' % (EXE, H, ROOM, HL), shell=True)
-time.sleep(16)
+time.sleep(24)
 subprocess.run('start "" /b "%s" --port %d --name 加入者 --room %s '
                '--signal ws://127.0.0.1:%d/signal --log-file "%s"'
                % (EXE, J, ROOM, H, JL), shell=True)
-time.sleep(20)
+time.sleep(42)
 
 ok_all = True
 for port, tag in ((H, "host"), (J, "join")):

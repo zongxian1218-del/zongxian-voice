@@ -71,7 +71,7 @@ def main():
     winmm = ctypes.windll.winmm
     SND_ASYNC, SND_FILENAME, SND_LOOP = 0x0001, 0x00020000, 0x0008
     winmm.PlaySoundW(str(WAV), None, SND_FILENAME | SND_ASYNC | SND_LOOP)
-    time.sleep(22)
+    time.sleep(32)
     winmm.PlaySoundW(None, None, 0)
     time.sleep(1)
     subprocess.run(['taskkill', '/F', '/IM', 'ZongxianVoice.exe'], capture_output=True)

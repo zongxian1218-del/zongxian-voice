@@ -57,12 +57,12 @@ print("启动 host（建房保活 + 发文字 + 共享声音）…")
 subprocess.run('start "" /b "%s" --port %d --name 房主 --create-room-test "%s" '
                '--create-room-keep --chat-test "房主说的话" --share-audio-test --log-file "%s"'
                % (EXE, H, ROOM, HL), shell=True)
-time.sleep(18)
+time.sleep(27)
 print("启动 join（加入 + 发文字）…")
 subprocess.run('start "" /b "%s" --port %d --name 加入者 --room %s '
                '--signal ws://127.0.0.1:%d/signal --chat-test "加入者说的话" --log-file "%s"'
                % (EXE, J, ROOM, H, JL), shell=True)
-time.sleep(45)
+time.sleep(55)
 subprocess.run(['taskkill', '/F', '/IM', 'ZongxianVoice.exe'], capture_output=True)
 time.sleep(1)
 

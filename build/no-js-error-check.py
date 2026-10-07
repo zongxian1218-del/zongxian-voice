@@ -56,12 +56,12 @@ print("host：建房保活 + 发起通话 + 共享声音 + 发文件…")
 subprocess.run('start "" /b "%s" --port %d --name 房主 --create-room-test "%s" '
                '--create-room-keep --call-test --share-audio-test --file-test "%s" --log-file "%s"'
                % (EXE, H, ROOM, PAYLOAD, HL), shell=True)
-time.sleep(18)
+time.sleep(27)
 print("join：加入…")
 subprocess.run('start "" /b "%s" --port %d --name 加入者 --room %s '
                '--signal ws://127.0.0.1:%d/signal --log-file "%s"'
                % (EXE, J, ROOM, H, JL), shell=True)
-time.sleep(30)
+time.sleep(42)
 
 # 用 UIA 点 join 的「挂断」—— 这是 remoteAudioEl 那条路径的入口
 invoke = r"""

@@ -65,7 +65,7 @@ def main():
         subprocess.run(f'start "" /b "{EXE}" --port {port} --name {n} --room {ROOM} '
                        f'{extra} --log-file "{LOGS[n]}"', shell=True)
         time.sleep(6)
-    time.sleep(25)          # 等三方成员表稳定
+    time.sleep(36)          # 等三方成员表稳定
 
     ok = True
     for n, port in (("host", HP), ("p2", P2), ("p3", P3)):
