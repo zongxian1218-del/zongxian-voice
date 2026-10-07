@@ -22,8 +22,18 @@ HOST_PORT, JOIN_PORT, ROOM = 46220, 46221, "twoinst3"
 HOST_LOG = ROOT / "tmp" / "two-host.log"
 JOIN_LOG = ROOT / "tmp" / "two-join.log"
 
-subprocess.run(['taskkill', '/F', '/IM', 'ZongxianVoice.exe'], capture_output=True)
-time.sleep(2)
+# 【2026-10-07 强化清场】反复杀到进程数为 0 再继续。
+#   原来只 taskkill 一次 + sleep：前一个守卫的实例没退干净就抢走端口/房间，
+#   后一个守卫会报假失败（实测：release 里"共享已开始=False"，单跑却 PASS）。
+for _ in range(10):
+    subprocess.run(['taskkill', '/F', '/IM', 'ZongxianVoice.exe'], capture_output=True)
+    _n = subprocess.run(['powershell', '-NoProfile', '-Command',
+                         "(Get-Process ZongxianVoice -ErrorAction SilentlyContinue).Count"],
+                        capture_output=True, text=True).stdout.strip()
+    if _n == "0":
+        break
+    time.sleep(0.7)
+time.sleep(0.5)
 for f in (HOST_LOG, JOIN_LOG):
     if f.exists():
         f.unlink()
