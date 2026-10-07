@@ -1767,6 +1767,44 @@ def check_mute_cycle():
     return ok
 
 
+def _app_process_count():
+    """当前运行中的应用实例数。"""
+    try:
+        r = subprocess.run(['powershell', '-NoProfile', '-Command',
+                            "(Get-Process ZongxianVoice -ErrorAction SilentlyContinue).Count"],
+                           capture_output=True, text=True, timeout=30)
+        return int((r.stdout or "0").strip() or 0)
+    except Exception:
+        return 0
+
+
+def cool_down(tag=''):
+    """批间降温：清掉残留实例并让系统缓一下。
+
+    【为什么需要】实测 45 项一口气串行跑时，系统累积 335+ 个 TCP TIME_WAIT，
+    后跑的项被拖慢：脚本里写死的 sleep 不够用，两个实例还没互相发现就开始断言，
+    表现为"成员=0 / 按钮被禁用 / 共享没开始"这类**假失败**（每项单跑都 PASS）。
+    这不是产品问题，是测试环境压力问题。
+    """
+    subprocess.run(['taskkill', '/F', '/IM', 'ZongxianVoice.exe'], capture_output=True)
+    for _ in range(10):
+        if _app_process_count() == 0:
+            break
+        time.sleep(0.5)
+    time.sleep(1.2)          # 让端口/UDP 广播资源落定
+    if tag:
+        print("   [降温] %s（实例已清 clean）" % tag)
+
+
+def e2e(fn):
+    """把"会启动实例"的检查包起来：跑前后各降一次温。判据本身完全不改。"""
+    cool_down(fn.__name__ + ' 前')
+    try:
+        return fn()
+    finally:
+        cool_down(fn.__name__ + ' 后')
+
+
 def fmt_env_blocked(title, detail):
     """环境中止的统一话术：说清"哪一项、为什么、怎么办、发版怎么办"。"""
     print("=" * 78)
@@ -1860,34 +1898,34 @@ def main():
         results.append(check_docs_consistency())
         results.append(check_ui_no_duplicate_entry())
         results.append(check_room_store())
-        results.append(check_room_create())
-        results.append(check_chat_end_to_end())
-        results.append(check_voice_call())
-        results.append(check_call_button_clickable())
-        results.append(check_one_side_call())
-        results.append(check_hangup_sync())
-        results.append(check_rejoin_call())
-        results.append(check_mute_cycle())
-        results.append(check_no_js_error())
-        results.append(check_room_rename_delete())
-        results.append(check_name_change())
-        results.append(check_input_clickable())
-        results.append(check_signal_stays_alive())
-        results.append(check_auto_reconnect())
-        results.append(check_user_flow())
-        results.append(check_file_and_selfname())
-        results.append(check_file_open_entry())
+        results.append(e2e(check_room_create))
+        results.append(e2e(check_chat_end_to_end))
+        results.append(e2e(check_voice_call))
+        results.append(e2e(check_call_button_clickable))
+        results.append(e2e(check_one_side_call))
+        results.append(e2e(check_hangup_sync))
+        results.append(e2e(check_rejoin_call))
+        results.append(e2e(check_mute_cycle))
+        results.append(e2e(check_no_js_error))
+        results.append(e2e(check_room_rename_delete))
+        results.append(e2e(check_name_change))
+        results.append(e2e(check_input_clickable))
+        results.append(e2e(check_signal_stays_alive))
+        results.append(e2e(check_auto_reconnect))
+        results.append(e2e(check_user_flow))
+        results.append(e2e(check_file_and_selfname))
+        results.append(e2e(check_file_open_entry))
         results.append(check_page_modules_shape())
         results.append(check_modules_dispose())
-        results.append(check_share_audio_end_to_end())
+        results.append(e2e(check_share_audio_end_to_end))
         results.append(check_invite_parse())
-        results.append(check_screen_share_end_to_end())
+        results.append(e2e(check_screen_share_end_to_end))
 
     # 【release 也必须跑这一条】2026-10-06 发现的洞：原来是 `("all", "selftest")`，
     # 于是**发版严格模式 release 反而漏跑了传输层 6 阶段自测** —— 而 release 是唯一出包的路径，
     # 漏掉的正好是最该跑的那一环（"严格模式比随便跑跑还松"）。现在三处都有它。
     if what in ("all", "release"):
-        results.append(check_two_instance())
+        results.append(e2e(check_two_instance))
 
     if what in ("all", "selftest", "release"):
         # 传输层自测：结果写在探针同级目录的日志里，比解析 stdout 稳妥。
