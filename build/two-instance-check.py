@@ -14,7 +14,8 @@ import sys
 import time
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-ROOT = pathlib.Path(r"D:\文档\ai001")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+(ROOT / "tmp").mkdir(parents=True, exist_ok=True)   # 目录可能不存在（开源仓库不带 tmp/）
 EXE = (ROOT / "src" / "winui-cs" / "bin" / "x64" / "Release"
        / "net8.0-windows10.0.19041.0" / "win-x64" / "ZongxianVoice.exe")
 HOST_PORT, JOIN_PORT, ROOM = 46220, 46221, "twoinst3"

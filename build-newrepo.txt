@@ -1,0 +1,51 @@
+[1/3] dotnet SDK:
+8.0.425
+[2/3] Building (Release) ...
+  正在确定要还原的项目…
+  已还原 D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj (用时 1.25 秒)。
+D:\文档\zongxian-voice\src\winui-cs\src\BridgeContract.cs(148,104): warning CS8625: 无法将 null 字面量转换为非 null 的引用类型。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(3803,31): warning CS8602: 解引用可能出现空引用。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(3819,15): warning CS8602: 解引用可能出现空引用。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(3846,23): warning CS8602: 解引用可能出现空引用。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(3924,21): warning CS8602: 解引用可能出现空引用。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(139,18): warning CS0414: 字段“MainWindow._bridgeContractOk”已被赋值，但从未使用过它的值 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\BridgeContract.cs(148,104): warning CS8625: 无法将 null 字面量转换为非 null 的引用类型。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(3803,31): warning CS8602: 解引用可能出现空引用。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(3819,15): warning CS8602: 解引用可能出现空引用。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(3846,23): warning CS8602: 解引用可能出现空引用。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(3924,21): warning CS8602: 解引用可能出现空引用。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(139,18): warning CS0414: 字段“MainWindow._bridgeContractOk”已被赋值，但从未使用过它的值 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+  ZongxianVoice -> D:\文档\zongxian-voice\src\winui-cs\bin\x64\Release\net8.0-windows10.0.19041.0\win-x64\ZongxianVoice.dll
+
+已成功生成。
+
+D:\文档\zongxian-voice\src\winui-cs\src\BridgeContract.cs(148,104): warning CS8625: 无法将 null 字面量转换为非 null 的引用类型。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(3803,31): warning CS8602: 解引用可能出现空引用。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(3819,15): warning CS8602: 解引用可能出现空引用。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(3846,23): warning CS8602: 解引用可能出现空引用。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(3924,21): warning CS8602: 解引用可能出现空引用。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(139,18): warning CS0414: 字段“MainWindow._bridgeContractOk”已被赋值，但从未使用过它的值 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\BridgeContract.cs(148,104): warning CS8625: 无法将 null 字面量转换为非 null 的引用类型。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(3803,31): warning CS8602: 解引用可能出现空引用。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(3819,15): warning CS8602: 解引用可能出现空引用。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(3846,23): warning CS8602: 解引用可能出现空引用。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(3924,21): warning CS8602: 解引用可能出现空引用。 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+D:\文档\zongxian-voice\src\winui-cs\src\MainWindow.xaml.cs(139,18): warning CS0414: 字段“MainWindow._bridgeContractOk”已被赋值，但从未使用过它的值 [D:\文档\zongxian-voice\src\winui-cs\ZongxianVoice.csproj]
+    12 个警告
+    0 个错误
+
+已用时间 00:00:16.01
+[3/4] Collecting artifacts ...
+[WARN] run build\build-media.cmd first
+      Cleaning run-time residue from dist ...
+      Deploying media assets ...
+[4/4] Generating resources.pri ...
+makepri: C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\makepri.exe
+resources.pri -> D:\文档\zongxian-voice\build\..\dist\winui\resources.pri (866,648 bytes)
+      BUILD-INFO.txt: commit=780aa9b+dirty
+
+=== Build OK (Release) ===
+Artifacts: D:\文档\zongxian-voice\build\..\dist\winui
+ZongxianVoice.exe
+ZongxianVoice.runtimeconfig.json
+resources.pri

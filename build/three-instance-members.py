@@ -15,6 +15,7 @@ import time
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 ROOT = pathlib.Path(__file__).resolve().parent.parent
+(ROOT / "tmp").mkdir(parents=True, exist_ok=True)   # 目录可能不存在（开源仓库不带 tmp/）
 EXE = (ROOT / "src" / "winui-cs" / "bin" / "x64" / "Release"
        / "net8.0-windows10.0.19041.0" / "win-x64" / "ZongxianVoice.exe")
 HP, P2, P3 = 46660, 46661, 46662
