@@ -374,6 +374,23 @@ def screen_size():
     return u32.GetSystemMetrics(0), u32.GetSystemMetrics(1)   # SM_CXSCREEN / SM_CYSCREEN
 
 
+def locate_fresh(element_id, tries=10):
+    """取元素矩形；对"明显过期"的坐标重试。
+
+    【为什么需要】窗口刚从最小化恢复、或刚被挪动时，UIA 会**继续返回旧坐标**
+    （实测：窗口已夹回 (722,300)，元素仍报 (-31520,-31302)），于是断言误报
+    "元素在屏幕外 / 窗口没归位"——看着像产品问题，其实是**测量过期**。
+    最小化时 Windows 把窗口放到 -32000，用这个阈值判断过期。
+    """
+    r = locate(element_id)
+    for _ in range(tries):
+        if r and r[0] > -10000 and r[1] > -10000:
+            return r
+        time.sleep(0.4)
+        r = locate(element_id) or r
+    return r
+
+
 def clamp_window_on_screen(hwnd):
     """把窗口夹回屏幕内（测试环境归一化，与 make_topmost 同类）。
 
@@ -412,7 +429,7 @@ def clamp_window_on_screen(hwnd):
         time.sleep(0.3)
 
 
-def assert_on_screen(rect, step):
+def assert_on_screen(rect, step, element_id=None):
     """断言元素**完整落在屏幕内**，并且**窗口本身也在屏幕内**。
 
     为什么要把窗口矩形也打出来：2026-10-06 实测出现过"居中日志写 (610,150)、
@@ -436,6 +453,12 @@ def assert_on_screen(rect, step):
     clamp_window_on_screen(APP_HWND)
     time.sleep(1.0)                       # 等窗口位置稳定（应用的一次布局移动通常 <1s）
     clamp_window_on_screen(APP_HWND)      # 稳定后再夹一次
+    # 【2026-10-07】夹回之后**重新量一次元素**：调用方传进来的 rect 是夹回之前量的，
+    # 窗口刚恢复时 UIA 还会给旧坐标（实测窗口已到 (722,300)、元素仍报 -31520）。
+    if element_id:
+        _fresh = locate_fresh(element_id)
+        if _fresh:
+            rect = _fresh
     win = None
     if APP_HWND and u32.GetWindowRect(APP_HWND, ctypes.byref(r)):
         win = (r.left, r.top, r.right, r.bottom)
@@ -536,7 +559,12 @@ def find_app_window():
             titled_any = titled_any or h
         elif t and big:
             titled_large = titled_large or h
-    return titled_large or titled_any
+    # 【2026-10-07 修复】**不返回小窗口**。
+    # 以前兜底返回 titled_any，于是主窗口还没出现时会抓到应用的一个 80x32 辅助窗口，
+    # 之后所有夹回/断言都对着它 ⇒ 报"主界面元素在屏幕外 (-31520,-31302)"
+    # ——看着像产品没归位，其实是测试选错了窗口。
+    # 小窗口一律不认（返回 0 表示"主窗口还没出现"，让调用方继续等）。
+    return titled_large
 
 
 def describe_foreground():
@@ -977,7 +1005,10 @@ def main():
             APP_PID = new_pid
             APP_HWND = 0
         if APP_PID:
-            APP_HWND = APP_HWND or find_app_window()
+            # 【2026-10-07 修复】每次都重找，**不要 or 缓存**：
+            # 之前 `APP_HWND or find_app_window()` 一旦拿到一个早期的小窗口就固定住了，
+            # 主窗口出现后也不会更新 ⇒ 后续夹回/断言全作用在错窗口上（实测报"元素在屏幕外"）。
+            APP_HWND = find_app_window() or APP_HWND
             rect = locate('ShareScreenButton') or locate('WelcomeEnterButton')
             if rect:
                 break
@@ -1011,7 +1042,7 @@ def main():
     # 第一屏若存在（D3 之后会去掉），用真鼠标点「进入」
     enter = wait_for('WelcomeEnterButton', wd, '等第一屏', seconds=5)
     if enter:
-        assert_on_screen(enter, '第一屏')
+        assert_on_screen(enter, '第一屏', element_id='WelcomeEnterButton')
         real_click(enter, wd, '点「进入」')
         main_rect = wait_for('ShareScreenButton', wd, '等主界面', seconds=15)
         if not main_rect:
@@ -1023,8 +1054,8 @@ def main():
     # 注意：不要拿纯布局容器（如 StackPanel x:Name="MemberList"）做断言 ——
     #   UIA 树里不暴露它（实测 locate('MemberList') 拿不到），那是测试写错、不是应用坏。
     #   只用能被 UIA 看见的**控件**做断言（Button / ComboBox / ToggleSwitch / TextBox）。
-    main_rect = locate('ShareScreenButton')
-    assert_on_screen(main_rect, '主界面')
+    main_rect = locate_fresh('ShareScreenButton')
+    assert_on_screen(main_rect, '主界面', element_id='ShareScreenButton')
     # 【2026-10-07 按用户建议合并键】"加入语音"和"挂断"合并成同一个键（通话中显示"挂断"），
     # 独立的 HangupButton 已隐藏 ⇒ 这里不能再断言它存在，改断言合并键 CallButton。
     if not locate('CallButton'):
